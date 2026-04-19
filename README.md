@@ -36,26 +36,13 @@ This is private, edge-native, offline-capable AI infrastructure.
 
 ---
 
-🚀 What it does today
+## 🚀 What it does today
 
-- 🧠 Local decision engine
-  "PollyBrain" evaluates events and determines actions
-
-- 🔌 On-device LLM integration
-  "LocalLlmManager", "GeminiNanoAdapter"
-
-- 📡 Mesh discovery & coordination
-  "NearbyMeshCoordinator", "SwarmCoordinator"
-
-- 🧭 Event-driven architecture
-  "BrainEventBus" routes all system signals
-
-- 📱 OS-level integration
-  
-  - Notifications
-  - Call screening
-  - Boot events
-
+- 🧠 **PollyBrain**: local decision engine that evaluates events and determines actions
+- 🔌 **On-device LLM support**: integrates local model runtimes through `LocalLlmManager` and `GeminiNanoAdapter`
+- 📡 **Mesh communication**: enables device-to-device coordination without centralized infrastructure
+- 📴 **Offline-first operation**: core behaviors continue without cloud connectivity
+- 🔒 **Private by design**: data and inference stay on the device whenever possible
 ---
 
 🔬 Example: Two Devices, No Internet
@@ -125,15 +112,17 @@ Core systems are functional, but evolving rapidly.
 
 ---
 
-🌍 Why this matters
+## 🌍 Why it matters
 
-If this direction succeeds:
+Most AI systems depend on cloud APIs, centralized servers, and constant connectivity.
 
-- AI becomes local-first
-- Devices collaborate without infrastructure
-- Intelligence becomes distributed
+Pollen OS takes a different path:
+- private by default
+- resilient when offline
+- cooperative across nearby devices
+- built for edge-native autonomy
 
-This is a fundamentally different model of computing.
+This makes it useful for unreliable networks, privacy-sensitive use cases, and future peer-to-peer AI systems.
 
 ---
 
