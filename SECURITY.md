@@ -8,7 +8,7 @@ Only the latest release receives security fixes.
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-Email: security@stackbleedctrl.com (or open a private GitHub advisory)
+Email: stackbleed@gmail.com (or open a private GitHub advisory)
 
 Include:
 - Description of the vulnerability
