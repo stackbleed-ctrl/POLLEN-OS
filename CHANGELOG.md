@@ -2,7 +2,31 @@
 
 All notable changes to Pollen are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+---
+# Changelog
 
+All notable changes to this project will be documented in this file.
+
+## [v0.1.0] - 2026-04-19
+
+### Added
+- Initial public release of Pollen OS
+- Android-focused on-device AI system architecture
+- Local decision engine foundations
+- Early mesh-native device-to-device communication framework
+- Initial offline-first design direction
+- On-device LLM integration components
+- Public README, branding, and project structure
+
+### Included in this release
+- Core repo structure for development and testing
+- Early implementation components for autonomous agent behavior
+- Initial documentation for project vision and architecture
+
+### Notes
+- This is an early technical preview
+- Not production-ready
+- Interfaces and internal architecture may change in future releases
 ---
 
 ## [0.6.0] — 2026-04-19
