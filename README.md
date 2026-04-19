@@ -1,4 +1,4 @@
-![Pollen-OS Banner](assets/pollen-os-banner.png)
+![Pollen-OS Banner](./pollen-os-banner.png)
 
 🌼 Pollen OS
 
