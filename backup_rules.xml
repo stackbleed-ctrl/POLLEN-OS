@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude keys and sensitive mesh data from cloud backup -->
+    <exclude domain="sharedpref" path="node_identity.xml" />
+    <exclude domain="database" path="pollen.db" />
+</full-backup-content>

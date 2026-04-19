@@ -1,0 +1,61 @@
+Categories:
+  - Internet
+  - Security
+
+License: MIT
+
+AuthorName: stackbleed-ctrl
+SourceCode: https://github.com/stackbleed-ctrl/Pollen
+IssueTracker: https://github.com/stackbleed-ctrl/Pollen/issues
+
+AutoName: Pollen
+
+Summary: Private AI operating layer for Android.
+
+Description: |-
+  🌼 Pollen turns Android phones into private, autonomous assistants.
+
+  It runs on-device, works offline, and can optionally cooperate with nearby
+  devices when local delegation is useful. Mesh is a hidden strength, not the
+  main identity.
+
+  <b>Key features:</b>
+
+  • Foreground AI operating layer for Android
+  • On-device LLM reasoning (Gemma 2B / Gemini Nano style local inference)
+  • Notification intake, call-screening scaffold, and action execution loop
+  • Nearby/offline coordination for capability routing
+  • End-to-end encrypted peer communication design
+  • Local-first memory and private device control
+
+  <b>Model planning note:</b> Expect about 1.3 GB download size for a 2B-class
+  int4 model package and roughly 2–3 GB RAM on modern phones, depending on the
+  exact shipped backend and runtime overhead.
+
+  <b>Permissions:</b> Permissions are requested by capability group. Core runtime
+  features use foreground service and notification access. Nearby radios are
+  needed for offline coordination. SMS, call handling, and camera features are
+  optional and should require explicit consent.
+
+  <b>Privacy:</b> No telemetry by default. No cloud dependency is required for
+  local operation. Data should stay on-device or on the local peer network.
+
+RepoType: git
+Repo: https://github.com/stackbleed-ctrl/Pollen
+
+Builds:
+  - versionName: '0.6.0'
+    versionCode: 1
+    commit: v0.6.0
+    subdir: app
+    gradle:
+      - yes
+    prebuild: sed -i 's/versionCode.*/versionCode $$VERCODE/' build.gradle.kts
+
+AllowedAPKSigningKeys:
+  - PLACEHOLDER_UPDATE_AFTER_FIRST_RELEASE
+
+AntiFeatures:
+
+CurrentVersion: '0.6.0'
+CurrentVersionCode: 1
