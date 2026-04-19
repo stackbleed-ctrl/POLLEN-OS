@@ -2,11 +2,9 @@
 
 🌼 Pollen OS
 
-«# 🌼 Pollen OS
-
 **The private AI layer that turns Android phones into autonomous, cooperative agents.**
 
-> Runs on-device • Works offline • Mesh-native autonomous agents»
+> Runs on-device • Works offline • Mesh-native autonomous agents
 
 ---
 
