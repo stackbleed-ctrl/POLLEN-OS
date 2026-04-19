@@ -2,13 +2,17 @@
 
 🌼 Pollen OS
 
-«The private AI layer that turns Android phones into autonomous, cooperative agents.»
+«# 🌼 Pollen OS
+
+**The private AI layer that turns Android phones into autonomous, cooperative agents.**
+
+> Runs on-device • Works offline • Mesh-native autonomous agents»
 
 ---
 
 ⚡ What is Pollen OS?
 
-Pollen OS is a decentralized, on-device AI system that operates both above and below the user layer.
+Pollen OS is a decentralized, on-device AI system that enables Android devices to think locally, communicate directly, and cooperate without relying on the cloud.
 
 It transforms Android devices into:
 
