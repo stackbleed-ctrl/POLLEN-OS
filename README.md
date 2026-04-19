@@ -14,25 +14,25 @@ Pollen OS is a decentralized, on-device AI system that enables Android devices t
 
 It transforms Android devices into:
 
-- 🧠 Self-thinking agents (local AI decisions)
+- 🧠 Autonomous agents (local AI decisions)
 - 📡 Mesh-connected nodes (device-to-device communication)
 - 🤝 Cooperative systems (shared intelligence across devices)
 
 No cloud required. No central server.
 
 ---
+## 🧬 Core Idea
 
-🧬 Core Idea
-
-Modern AI is centralized.
+Modern AI depends on centralized infrastructure.
 
 Pollen OS flips that model:
 
-- Devices think locally
-- Devices communicate directly
-- Intelligence emerges from the network
+- devices think locally
+- devices communicate directly
+- intelligence emerges from the network
 
-This is edge-native AI infrastructure.
+This is private, edge-native, offline-capable AI infrastructure.
+
 
 ---
 
