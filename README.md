@@ -33,6 +33,21 @@ Pollen OS flips that model:
 
 This is private, edge-native, offline-capable AI infrastructure.
 
+---
+
+## Download Alpha Build
+
+Download the latest tester build here:
+
+[Download the latest alpha ZIP from Releases](https://github.com/stackbleed-ctrl/POLLEN-OS/releases)
+
+### Installation
+1. Open the latest release
+2. Download `pollen-debug-apk.zip`
+3. Extract the zip
+4. Open `app-debug.apk`
+5. Install on Android
+6. Allow installation from unknown sources if prompted
 
 ---
 
