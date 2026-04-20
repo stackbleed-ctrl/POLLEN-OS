@@ -1,0 +1,51 @@
+# Android
+*.apk
+*.ap_
+*.dex
+bin/
+gen/
+.gradle/
+local.properties
+proguard/
+*.log
+.navigation/
+captures/
+*.jks
+*.keystore
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.project
+.classpath
+.c9revisions/
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+
+# Build artifacts
+build/
+out/
+
+# Dependencies
+node_modules/
+vendor/
+
+# AI models (if any)
+*.model
+*.weights
+*.pkl
+
+# Configuration
+config.local

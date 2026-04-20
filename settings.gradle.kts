@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Pollyn"
+rootProject.name = "POLLEN-OS"
 include(":app")
