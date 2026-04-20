@@ -143,3 +143,4 @@ Report vulnerabilities via:
 📜 License
 
 MIT
+
