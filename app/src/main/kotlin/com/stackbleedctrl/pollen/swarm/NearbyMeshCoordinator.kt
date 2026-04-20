@@ -5,6 +5,7 @@ import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.ConnectionInfo
 import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
+import com.google.android.gms.nearby.connection.ConnectionResolution
 import com.google.android.gms.nearby.connection.ConnectionsClient
 import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo
 import com.google.android.gms.nearby.connection.DiscoveryOptions
@@ -32,8 +33,17 @@ class NearbyMeshCoordinator @Inject constructor(
 
     fun start() {
         tracer.trace("mesh", "start advertise + discover")
-        client.startAdvertising(localName, serviceId, lifecycle, AdvertisingOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build())
-        client.startDiscovery(serviceId, discovery, DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build())
+        client.startAdvertising(
+            localName,
+            serviceId,
+            lifecycle,
+            AdvertisingOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
+        )
+        client.startDiscovery(
+            serviceId,
+            discovery,
+            DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
+        )
     }
 
     fun stop() {
@@ -55,12 +65,19 @@ class NearbyMeshCoordinator @Inject constructor(
             client.acceptConnection(endpointId, payloads)
             peers[endpointId] = PeerNode(endpointId, info.endpointName, connected = false)
         }
-        override fun onConnectionResult(endpointId: String, result: com.google.android.gms.common.api.Status) {
-            peers[endpointId] = peers[endpointId]?.copy(connected = result.isSuccess) ?: PeerNode(endpointId, endpointId, result.isSuccess)
+
+        override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
+            val connected = result.status.isSuccess
+            peers[endpointId] =
+                peers[endpointId]?.copy(connected = connected)
+                    ?: PeerNode(endpointId, endpointId, connected)
             trustManager.notePeer(endpointId)
         }
+
         override fun onDisconnected(endpointId: String) {
-            peers[endpointId] = peers[endpointId]?.copy(connected = false) ?: PeerNode(endpointId, endpointId, false)
+            peers[endpointId] =
+                peers[endpointId]?.copy(connected = false)
+                    ?: PeerNode(endpointId, endpointId, false)
         }
     }
 
@@ -69,6 +86,7 @@ class NearbyMeshCoordinator @Inject constructor(
             peers[endpointId] = PeerNode(endpointId, info.endpointName, connected = false)
             client.requestConnection(localName, endpointId, lifecycle)
         }
+
         override fun onEndpointLost(endpointId: String) {
             peers.remove(endpointId)
         }
@@ -80,6 +98,7 @@ class NearbyMeshCoordinator @Inject constructor(
             tracer.trace("mesh", "received from=$endpointId msg=$text")
             trustManager.notePeer(endpointId)
         }
+
         override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) = Unit
     }
 }

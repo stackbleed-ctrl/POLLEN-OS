@@ -19,6 +19,6 @@ class CrdtMemoryStore @Inject constructor(
     }
 
     suspend fun recent(limit: Int = 20): List<Pair<String, String>> = lock.withLock {
-        entries.entries.takeLast(limit).map { it.toPair() }
+        entries.entries.toList().takeLast(limit).map { it.toPair() }
     }
 }
