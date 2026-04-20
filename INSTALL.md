@@ -36,8 +36,8 @@ In production, these should also be selectively disableable from app settings.
 ## Enable system access
 
 1. Grant notification permission if prompted.
-2. Manually enable notification access for Pollyn in system settings.
-3. On supported devices, set Pollyn as the default call screening app if you want to test call events.
+2. Manually enable notification access for Pollen in system settings.
+3. On supported devices, set Pollen as the default call screening app if you want to test call events.
 4. For swarm testing, install on a second device and keep Nearby/Bluetooth/Wi-Fi radios enabled as needed.
 
 ## Demo goals

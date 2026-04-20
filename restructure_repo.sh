@@ -23,22 +23,22 @@ mkdir -p app/src/main/res/drawable
 [ -f proguard-rules.pro ] && mv proguard-rules.pro app/proguard-rules.pro
 
 # Main Kotlin files
-mkdir -p app/src/main/java/com/stackbleedctrl/pollyn
-mkdir -p app/src/main/java/com/stackbleedctrl/pollyn/oslayer
-mkdir -p app/src/main/java/com/stackbleedctrl/pollyn/ui
-mkdir -p app/src/main/java/com/stackbleedctrl/pollyn/ui/theme
+mkdir -p app/src/main/java/com/stackbleedctrl/pollen
+mkdir -p app/src/main/java/com/stackbleedctrl/pollen/oslayer
+mkdir -p app/src/main/java/com/stackbleedctrl/pollen/ui
+mkdir -p app/src/main/java/com/stackbleedctrl/pollen/ui/theme
 
 # This repo has package declarations already; these moves are best-effort.
-for f in MainActivity.kt MainViewModel.kt PollynApp.kt BootReceiver.kt AppModule.kt; do
-  [ -f "$f" ] && mv "$f" app/src/main/java/com/stackbleedctrl/pollyn/"$f"
+for f in MainActivity.kt MainViewModel.kt PollenApp.kt BootReceiver.kt AppModule.kt; do
+  [ -f "$f" ] && mv "$f" app/src/main/java/com/stackbleedctrl/pollen/"$f"
 done
 
-for f in PollynBrain.kt PollynBrainService.kt PollynCallScreeningService.kt PollynNotificationListenerService.kt ActionExecutor.kt BrainDecision.kt BrainEventBus.kt CrdtMemoryStore.kt GeminiNanoAdapter.kt HybridLogicalClock.kt LlmBackend.kt LocalLlmManager.kt NearbyMeshCoordinator.kt NodeTrustManager.kt PeerNode.kt PhoneEvent.kt PollynSdk.kt PollynTracer.kt RuleBasedFallbackLlm.kt SmartRoutingTable.kt SwarmCoordinator.kt; do
-  [ -f "$f" ] && mv "$f" app/src/main/java/com/stackbleedctrl/pollyn/oslayer/"$f"
+for f in PollenBrain.kt PollenBrainService.kt PollenCallScreeningService.kt PollenNotificationListenerService.kt ActionExecutor.kt BrainDecision.kt BrainEventBus.kt CrdtMemoryStore.kt GeminiNanoAdapter.kt HybridLogicalClock.kt LlmBackend.kt LocalLlmManager.kt NearbyMeshCoordinator.kt NodeTrustManager.kt PeerNode.kt PhoneEvent.kt PollenSdk.kt PollenTracer.kt RuleBasedFallbackLlm.kt SmartRoutingTable.kt SwarmCoordinator.kt; do
+  [ -f "$f" ] && mv "$f" app/src/main/java/com/stackbleedctrl/pollen/oslayer/"$f"
 done
 
-for f in PollynDashboardScreen.kt PollynUiState.kt Theme.kt; do
-  [ -f "$f" ] && mv "$f" app/src/main/java/com/stackbleedctrl/pollyn/ui/"$f"
+for f in PollenDashboardScreen.kt PollenUiState.kt Theme.kt; do
+  [ -f "$f" ] && mv "$f" app/src/main/java/com/stackbleedctrl/pollen/ui/"$f"
 done
 
 # Tests

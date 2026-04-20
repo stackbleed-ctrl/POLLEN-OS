@@ -1,0 +1,10 @@
+This zip was reorganized into a standard Android app tree.
+
+Key changes:
+- Moved root-level Kotlin sources into app/src/main/kotlin/... based on each file's declared package.
+- Moved root XML resources into app/src/main/res/... and AndroidManifest.xml into app/src/main/.
+- Moved Android CI workflow to .github/workflows/android.yml.
+- Removed duplicate flat root source/resource files to avoid two competing project layouts.
+- Updated Gradle files to use namespace/applicationId com.stackbleedctrl.pollen and include Compose/Hilt/Nearby dependencies inferred from imports.
+
+You should still review the build in Android Studio or CI, because some source files use mixed package names such as pollen vs pollen in tests.

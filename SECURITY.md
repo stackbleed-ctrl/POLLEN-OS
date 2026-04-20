@@ -20,7 +20,7 @@ You'll receive a response within 72 hours. Confirmed critical vulnerabilities sh
 
 ## Threat model highlights
 
-Pollyn is a private Android AI layer with optional nearby peer cooperation. The current threat model includes:
+Pollen is a private Android AI layer with optional nearby peer cooperation. The current threat model includes:
 
 ### Data protection
 - On-device data should remain local by default.

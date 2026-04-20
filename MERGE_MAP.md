@@ -1,7 +1,7 @@
 # Merge Map
 
 ## Product identity
-Pollyn is implemented as an **Android AI operating layer**. Mesh, CRDT, and swarm are treated as enabling systems, not the main product identity.
+Pollen is implemented as an **Android AI operating layer**. Mesh, CRDT, and swarm are treated as enabling systems, not the main product identity.
 
 ## Source carry-forward
 - **v4**
