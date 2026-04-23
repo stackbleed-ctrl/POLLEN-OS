@@ -30,8 +30,8 @@ fun PollynDashboardScreen(
         modifier = Modifier.fillMaxSize().padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Pollyn", style = MaterialTheme.typography.headlineMedium)
-        Text("Private AI operating layer for Android")
+        Text("POLLYN DEBUG BUILD 7", style = MaterialTheme.typography.headlineMedium)
+        Text("DEBUG SCREEN WITH PEER COUNT + LOGS")
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Last decision: ${state.lastDecision}")
@@ -45,7 +45,12 @@ fun PollynDashboardScreen(
             label = { Text("Intent") }
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onStartService) { Text("Start brain") }
+            Button(onClick = {
+    android.util.Log.d("POLLEN_UI", "Engage Brain tapped")
+    onStartService()
+}) {
+    Text("Engage Brain")
+}
             Button(onClick = { onSubmitIntent(input.value) }) { Text("Run intent") }
             Button(onClick = onMeshPing) { Text("Mesh ping") }
         }

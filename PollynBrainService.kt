@@ -36,9 +36,11 @@ class PollynBrainService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        android.util.Log.d("POLLEN_SERVICE", "PollynBrainService onCreate")
         createChannel()
-        startForeground(1001, notification("Pollyn active"))
+        startForeground(1001, notification("Pollyn active - starting swarm"))
         swarm.start()
+        android.util.Log.d("POLLEN_SERVICE", "swarm.start called")
         bus.events.onEach { event ->
             when (event) {
                 is BrainEvent.InputEvent -> handle(event.event)
@@ -79,7 +81,16 @@ class PollynBrainService : Service() {
     }
 
     private fun notification(text: String): Notification {
-        val launch = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        val intent = Intent(this, MainActivity::class.java).apply {
+    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+}
+
+val launch = PendingIntent.getActivity(
+    this,
+    1001,
+    intent,
+    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+)
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Pollyn")

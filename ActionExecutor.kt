@@ -3,7 +3,7 @@ package com.stackbleedctrl.pollyn.oslayer
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import com.stackbleedctrl.pollyn.core.model.BrainDecision
+import com.stackbleedctrl.pollyn.core.model.Decision
 import com.stackbleedctrl.pollyn.core.model.DecisionType
 import com.stackbleedctrl.pollyn.tracing.PollynTracer
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,7 +15,7 @@ class ActionExecutor @Inject constructor(
     @ApplicationContext private val context: Context,
     private val tracer: PollynTracer
 ) {
-    fun execute(decision: BrainDecision) {
+    fun execute(decision: Decision) {
         when (decision.type) {
             DecisionType.OPEN_APP -> openPackage(decision.actionPayload)
             DecisionType.BLOCK_CALL -> tracer.trace("action", "call block requested")
