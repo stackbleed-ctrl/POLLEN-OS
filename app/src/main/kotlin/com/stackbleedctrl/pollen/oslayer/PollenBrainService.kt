@@ -33,31 +33,47 @@ class PollenBrainService : Service() {
     @Inject lateinit var tracer: PollenTracer
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var meshStarted = false
 
     override fun onCreate() {
         super.onCreate()
         createChannel()
         startForeground(1001, notification("Pollen active"))
-        swarm.start()
-        bus.tryEmit(BrainEvent.MeshStatus("Brain service started"))
+
         bus.events.onEach { event ->
-          when (event) {
-    is BrainEvent.InputEvent -> handle(event.event)
-    is BrainEvent.MeshStatus -> updateNotification(event.text)
-    is BrainEvent.DecisionMade -> updateNotification(event.decision.summary)
-    is BrainEvent.PeerCountChanged -> updateNotification("Peers: ${event.count}")
-  }
+            when (event) {
+                is BrainEvent.InputEvent -> handle(event.event)
+                is BrainEvent.MeshStatus -> updateNotification(event.text)
+                is BrainEvent.DecisionMade -> updateNotification(event.decision.summary)
+                is BrainEvent.PeerCountChanged -> updateNotification("Peers: ${event.count}")
+            }
         }.launchIn(scope)
+
+        bus.tryEmit(BrainEvent.MeshStatus("Brain service created"))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        bus.tryEmit(BrainEvent.MeshStatus("Brain service started"))
+
+        if (!meshStarted) {
+            meshStarted = true
+            swarm.start()
+            bus.tryEmit(BrainEvent.MeshStatus("Mesh start requested"))
+        } else {
+            bus.tryEmit(BrainEvent.MeshStatus("Mesh already running"))
+        }
+
         val raw = intent?.getStringExtra(EXTRA_USER_INTENT)
-        if (!raw.isNullOrBlank()) bus.tryEmit(BrainEvent.InputEvent(PhoneEvent.UserIntent(raw)))
+        if (!raw.isNullOrBlank()) {
+            bus.tryEmit(BrainEvent.InputEvent(PhoneEvent.UserIntent(raw)))
+        }
+
         return START_STICKY
     }
 
     override fun onDestroy() {
         swarm.stop()
+        meshStarted = false
         scope.cancel()
         super.onDestroy()
     }
@@ -75,22 +91,27 @@ class PollenBrainService : Service() {
 
     private fun createChannel() {
         if (Build.VERSION.SDK_INT >= 26) {
-            val channel = NotificationChannel(CHANNEL_ID, "Pollen Brain", NotificationManager.IMPORTANCE_MIN)
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Pollen Brain",
+                NotificationManager.IMPORTANCE_MIN
+            )
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
     }
 
     private fun notification(text: String): Notification {
         val intent = Intent(this, MainActivity::class.java).apply {
-    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-}
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
 
-val launch = PendingIntent.getActivity(
-    this,
-    1001,
-    intent,
-    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-)
+        val launch = PendingIntent.getActivity(
+            this,
+            1001,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Pollen")
