@@ -55,13 +55,15 @@ class PollenBrainService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         bus.tryEmit(BrainEvent.MeshStatus("Brain service started"))
 
-        if (!meshStarted) {
-            meshStarted = true
-            swarm.start()
-            bus.tryEmit(BrainEvent.MeshStatus("Mesh start requested"))
-        } else {
-            bus.tryEmit(BrainEvent.MeshStatus("Mesh already running"))
-        }
+        bus.tryEmit(BrainEvent.MeshStatus("Restarting mesh"))
+
+swarm.stop()
+meshStarted = false
+
+swarm.start()
+meshStarted = true
+
+bus.tryEmit(BrainEvent.MeshStatus("Mesh start requested"))
 
         val raw = intent?.getStringExtra(EXTRA_USER_INTENT)
         if (!raw.isNullOrBlank()) {
