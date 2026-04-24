@@ -37,22 +37,28 @@ class MainActivity : ComponentActivity() {
         requestPollenPermissions()
 
         setContent {
-    PollenConsoleScreen(
-        onStartBrain = {
-            vm.startBrain()
-            ContextCompat.startForegroundService(
-                this,
-                Intent(this, PollenBrainService::class.java)
+            PollenConsoleScreen(
+                connected = vm.state.peerCount > 0,
+                peerCount = vm.state.peerCount,
+                lastIntent = vm.state.lastIntent.ifBlank { "Mesh Health Check" },
+                lastDecision = vm.state.lastDecision,
+                meshStatus = vm.state.meshStatus,
+                debugLines = vm.state.debugLines,
+                onStartBrain = {
+                    vm.startBrain()
+                    ContextCompat.startForegroundService(
+                        this,
+                        Intent(this, PollenBrainService::class.java)
+                    )
+                },
+                onRunIntent = {
+                    vm.submitIntent("Mesh Health Check")
+                },
+                onMeshPing = vm::meshPing
             )
-        },
-        onRunIntent = {
-            vm.submitIntent("summarize my notifications")
-        },
-        onMeshPing = vm::meshPing
-    )
-  }
+        }
+    }
 
-}
     private fun requestPollenPermissions() {
         val permissions = mutableListOf<String>()
 

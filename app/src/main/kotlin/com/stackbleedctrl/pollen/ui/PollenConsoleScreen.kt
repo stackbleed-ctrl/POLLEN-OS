@@ -11,11 +11,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -38,36 +42,44 @@ import com.stackbleedctrl.pollen.ui.PollenColors.TextPrimary
 
 @Composable
 fun PollenConsoleScreen(
-    connected: Boolean = true,
-    peerCount: Int = 1,
-    lastIntent: String = "summarize my notifications",
-    meshStatus: String = "PING received from Moto G 5G",
+    connected: Boolean = false,
+    peerCount: Int = 0,
+    lastIntent: String = "Mesh Health Check",
+    lastDecision: String = "Waiting",
+    meshStatus: String = "Idle",
+    debugLines: List<String> = emptyList(),
     onStartBrain: () -> Unit = {},
     onRunIntent: () -> Unit = {},
     onMeshPing: () -> Unit = {}
 ) {
+    val visibleIntent = lastIntent.ifBlank { "Mesh Health Check" }
+    val visibleDecision = lastDecision.ifBlank { "Waiting" }
+    val visibleStatus = meshStatus.ifBlank { "Idle" }
+
     PollenTheme {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(PollenBackgroundBrush)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Header(connected = connected, peerCount = peerCount)
+            Header(
+                connected = connected,
+                peerCount = peerCount
+            )
 
             PremiumPanel {
-                Text(
-                    text = "BRAIN STATUS",
-                    color = GoldSoft,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                SectionTitle("BRAIN STATUS")
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                InfoLine("Last intent", lastIntent)
-                InfoLine("Mesh status", meshStatus)
+                InfoLine("Current test", visibleIntent)
+                InfoLine("Last decision", visibleDecision)
+                InfoLine("Mesh status", visibleStatus)
                 InfoLine("Peer count", peerCount.toString())
             }
 
@@ -80,11 +92,13 @@ fun PollenConsoleScreen(
                     modifier = Modifier.weight(1f),
                     onClick = onStartBrain
                 )
+
                 GoldButton(
-                    text = "Run Intent",
+                    text = "Run Test",
                     modifier = Modifier.weight(1f),
                     onClick = onRunIntent
                 )
+
                 GoldButton(
                     text = "Mesh Ping",
                     modifier = Modifier.weight(1f),
@@ -93,35 +107,43 @@ fun PollenConsoleScreen(
             }
 
             PremiumPanel {
-                Text(
-                    text = "MESH NETWORK",
-                    color = GoldSoft,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                SectionTitle("MESH NETWORK")
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                InfoLine("Device", "moto g 5G - 2023")
-                InfoLine("Pollen ID", "POLLEN-465A80")
-                InfoLine("Active peer", "OTKH connected")
+                InfoLine("Connection", if (connected) "Connected" else "Searching")
+                InfoLine("Visible peers", peerCount.toString())
+                InfoLine("Active test", "Peer Discovery Test")
+                InfoLine("Task routing", if (connected) "Peer route available" else "Local device")
                 InfoLine("Queue", "No pending tasks")
             }
 
             PremiumPanel {
-                Text(
-                    text = "DEBUG LOG",
-                    color = GoldSoft,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                SectionTitle("ALPHA TEST TASKS")
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                InfoLine("3:11:02", "Advertising started")
-                InfoLine("3:11:03", "Discovery complete")
-                InfoLine("3:11:05", "PING received from Moto G 5G")
+                InfoLine("Primary", "Mesh Health Check")
+                InfoLine("Secondary", "Connection Recovery Test")
+                InfoLine("Ping test", "Send Mesh Ping")
+                InfoLine("Status sync", "Device Status Sync")
             }
+
+            PremiumPanel {
+                SectionTitle("DEBUG LOG")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (debugLines.isEmpty()) {
+                    InfoLine("Status", "Waiting for tester activity")
+                } else {
+                    debugLines.takeLast(8).forEachIndexed { index, line ->
+                        InfoLine("#${index + 1}", line)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
@@ -170,7 +192,11 @@ private fun Header(
             Spacer(modifier = Modifier.width(10.dp))
 
             Text(
-                text = if (connected) "Connected • $peerCount Peer" else "Searching",
+                text = if (connected) {
+                    "Connected • $peerCount Peer"
+                } else {
+                    "Searching"
+                },
                 color = TextPrimary,
                 style = MaterialTheme.typography.titleMedium
             )
@@ -193,6 +219,16 @@ private fun PremiumPanel(content: @Composable ColumnScope.() -> Unit) {
             .border(1.dp, Gold.copy(alpha = 0.45f), RoundedCornerShape(22.dp))
             .padding(16.dp),
         content = content
+    )
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text = text,
+        color = GoldSoft,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold
     )
 }
 
