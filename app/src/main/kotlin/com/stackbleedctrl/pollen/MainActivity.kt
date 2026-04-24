@@ -19,31 +19,58 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val vm: MainViewModel by viewModels()
 
-    private val notifPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { }
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        val denied = results.filterValues { granted -> !granted }.keys
+
+        if (denied.isEmpty()) {
+            vm.permissionsReady()
+        } else {
+            vm.permissionsDenied(denied.joinToString())
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        if (Build.VERSION.SDK_INT >= 33) {
-            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
+
+        requestPollenPermissions()
+
         setContent {
             PollenTheme {
                 PollenDashboardScreen(
                     state = vm.state,
                     onStartService = {
-    vm.startBrain()
-    ContextCompat.startForegroundService(
-        this,
-        Intent(this, PollenBrainService::class.java)
-    )
-},
+                        vm.startBrain()
+                        ContextCompat.startForegroundService(
+                            this,
+                            Intent(this, PollenBrainService::class.java)
+                        )
+                    },
                     onSubmitIntent = vm::submitIntent,
                     onMeshPing = vm::meshPing
                 )
             }
         }
+    }
+
+    private fun requestPollenPermissions() {
+        val permissions = mutableListOf<String>()
+
+        permissions += Manifest.permission.ACCESS_FINE_LOCATION
+
+        if (Build.VERSION.SDK_INT >= 31) {
+            permissions += Manifest.permission.BLUETOOTH_SCAN
+            permissions += Manifest.permission.BLUETOOTH_CONNECT
+            permissions += Manifest.permission.BLUETOOTH_ADVERTISE
+        }
+
+        if (Build.VERSION.SDK_INT >= 33) {
+            permissions += Manifest.permission.POST_NOTIFICATIONS
+            permissions += Manifest.permission.NEARBY_WIFI_DEVICES
+        }
+
+        permissionLauncher.launch(permissions.toTypedArray())
     }
 }

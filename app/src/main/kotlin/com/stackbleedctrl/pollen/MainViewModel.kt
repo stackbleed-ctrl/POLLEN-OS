@@ -30,7 +30,10 @@ class MainViewModel @Inject constructor(
             appendDebug("brain mesh status: $status")
             state = state.copy(meshStatus = status)
         }
-
+        sdk.brain.handlePeerCount { count ->
+    appendDebug("peer count: $count")
+    state = state.copy(peerCount = count)
+}
         appendDebug("Waiting for Start brain")
     }
 
