@@ -199,7 +199,38 @@ class NearbyMeshCoordinator @Inject constructor(
             tracer.trace("mesh", "received from=$endpointId msg=$text")
             trustManager.notePeer(endpointId)
 
-            emitMeshStatus("Received from $endpointId: $text")
+            val message = MeshMessage.decode(text)
+
+            if (message == null) {
+                emitMeshStatus("Received raw from $endpointId: $text")
+                return
+            }
+
+            when (message.type) {
+                MeshMessageType.HELLO -> {
+                    emitMeshStatus("HELLO from ${message.fromNodeId}")
+                }
+
+                MeshMessageType.PING -> {
+                    emitMeshStatus("PING from ${message.fromNodeId}: ${message.payload}")
+                }
+
+                MeshMessageType.INTENT -> {
+                    emitMeshStatus("INTENT from ${message.fromNodeId}: ${message.payload}")
+                }
+
+                MeshMessageType.ACK -> {
+                    emitMeshStatus("ACK from ${message.fromNodeId}: ${message.payload}")
+                }
+
+                MeshMessageType.LOG -> {
+                    emitMeshStatus("LOG from ${message.fromNodeId}: ${message.payload}")
+                }
+
+                MeshMessageType.ROUTE -> {
+                    emitMeshStatus("ROUTE from ${message.fromNodeId}: ${message.payload}")
+                }
+            }
         }
 
         override fun onPayloadTransferUpdate(

@@ -54,7 +54,10 @@ class PollenSdk @Inject constructor(
     suspend fun submitIntent(raw: String) {
         bus.emit(BrainEvent.InputEvent(PhoneEvent.UserIntent(raw)))
     }
-
+    suspend fun sendIntentToPeers(raw: String) {
+    swarm.sendIntentToPeers(raw)
+    bus.emit(BrainEvent.MeshStatus("Intent sent to mesh peers"))
+}
     suspend fun meshPing() {
         swarm.meshPing()
         bus.emit(BrainEvent.MeshStatus("Mesh ping sent"))
