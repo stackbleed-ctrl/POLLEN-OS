@@ -11,8 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import com.stackbleedctrl.pollen.oslayer.PollenBrainService
-import com.stackbleedctrl.pollen.ui.PollenDashboardScreen
-import com.stackbleedctrl.pollen.ui.theme.PollenTheme
+import com.stackbleedctrl.pollen.ui.PollenConsoleScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -38,23 +37,22 @@ class MainActivity : ComponentActivity() {
         requestPollenPermissions()
 
         setContent {
-            PollenTheme {
-                PollenDashboardScreen(
-                    state = vm.state,
-                    onStartService = {
-                        vm.startBrain()
-                        ContextCompat.startForegroundService(
-                            this,
-                            Intent(this, PollenBrainService::class.java)
-                        )
-                    },
-                    onSubmitIntent = vm::submitIntent,
-                    onMeshPing = vm::meshPing
-                )
-            }
-        }
-    }
+    PollenConsoleScreen(
+        onStartBrain = {
+            vm.startBrain()
+            ContextCompat.startForegroundService(
+                this,
+                Intent(this, PollenBrainService::class.java)
+            )
+        },
+        onRunIntent = {
+            vm.submitIntent("summarize my notifications")
+        },
+        onMeshPing = vm::meshPing
+    )
+  }
 
+}
     private fun requestPollenPermissions() {
         val permissions = mutableListOf<String>()
 
