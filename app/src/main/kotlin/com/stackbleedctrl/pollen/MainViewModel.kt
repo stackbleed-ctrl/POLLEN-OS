@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stackbleedctrl.pollen.sdk.PollenSdk
-import com.stackbleedctrl.pollen.swarm.MeshEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -32,33 +31,16 @@ class MainViewModel @Inject constructor(
             state = state.copy(meshStatus = status)
         }
 
-        viewModelScope.launch {
-            sdk.mesh.events.collect { event ->
-                when (event) {
-                    is MeshEvent.Status -> appendDebug("[STATUS] ${event.tag}: ${event.detail}")
-                    is MeshEvent.Error -> appendDebug("[ERROR] ${event.tag}: ${event.reason}")
-                    is MeshEvent.PeerConnected -> appendDebug("[PEER CONNECTED] ${event.peer.displayName}")
-                    is MeshEvent.PeerDisconnected -> appendDebug("[PEER DISCONNECTED] ${event.peer.displayName}")
-                    is MeshEvent.MessageReceived -> appendDebug("[MSG] ${event.message.text}")
-                    is MeshEvent.SendFailed -> appendDebug("[SEND FAIL] ${event.reason}")
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            sdk.mesh.peers.collect { peers ->
-                state = state.copy(peerCount = peers.size)
-                appendDebug("peerCount=${peers.size}")
-            }
-        }
+        appendDebug("Waiting for Start brain")
     }
 
     fun submitIntent(raw: String) {
         state = state.copy(lastIntent = raw)
-        appendDebug("intent: $raw")
+        appendDebug("intent pressed: $raw")
 
         viewModelScope.launch {
             sdk.submitIntent(raw)
+            appendDebug("intent submitted")
         }
     }
 
@@ -66,8 +48,8 @@ class MainViewModel @Inject constructor(
         appendDebug("PING pressed")
 
         viewModelScope.launch {
-            val sent = sdk.mesh.broadcast("pollen_ping")
-            appendDebug("broadcast sent to $sent connected peers")
+            sdk.meshPing()
+            appendDebug("sdk.meshPing called")
         }
     }
 
