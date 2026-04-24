@@ -30,15 +30,15 @@ class NearbyMeshCoordinator @Inject constructor(
     private val bus: BrainEventBus
 ) {
     private val client: ConnectionsClient = Nearby.getConnectionsClient(context)
-    private val serviceId = context.packageName
-    private val localName = android.os.Build.MODEL ?: "android"
-    private val peers = linkedMapOf<String, PeerNode>()
+    private val serviceId: String = context.packageName
+    private val localName: String = android.os.Build.MODEL ?: "android"
+    private val peers: LinkedHashMap<String, PeerNode> = linkedMapOf()
 
     fun start() {
         tracer.trace("mesh", "start advertise + discover")
         emitMeshStatus("Starting advertise + discover")
 
-        client.startAdvertising(
+        val advertisingTask = client.startAdvertising(
             localName,
             serviceId,
             lifecycle,
@@ -47,13 +47,53 @@ class NearbyMeshCoordinator @Inject constructor(
                 .build()
         )
 
-        client.startDiscovery(
+        emitMeshStatus("Advertising request submitted")
+
+        advertisingTask
+            .addOnSuccessListener {
+                emitMeshStatus("Advertising started")
+            }
+            .addOnFailureListener { error ->
+                emitMeshStatus("Advertising failed: ${error.message ?: error.javaClass.simpleName}")
+            }
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    emitMeshStatus("Advertising complete: success")
+                } else {
+                    val message = task.exception?.message
+                        ?: task.exception?.javaClass?.simpleName
+                        ?: "unknown"
+                    emitMeshStatus("Advertising complete: failed $message")
+                }
+            }
+
+        val discoveryTask = client.startDiscovery(
             serviceId,
             discovery,
             DiscoveryOptions.Builder()
                 .setStrategy(Strategy.P2P_CLUSTER)
                 .build()
         )
+
+        emitMeshStatus("Discovery request submitted")
+
+        discoveryTask
+            .addOnSuccessListener {
+                emitMeshStatus("Discovery started")
+            }
+            .addOnFailureListener { error ->
+                emitMeshStatus("Discovery failed: ${error.message ?: error.javaClass.simpleName}")
+            }
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    emitMeshStatus("Discovery complete: success")
+                } else {
+                    val message = task.exception?.message
+                        ?: task.exception?.javaClass?.simpleName
+                        ?: "unknown"
+                    emitMeshStatus("Discovery complete: failed $message")
+                }
+            }
     }
 
     fun stop() {
