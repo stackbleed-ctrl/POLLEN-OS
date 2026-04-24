@@ -14,6 +14,8 @@ import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy
+import com.stackbleedctrl.pollen.oslayer.BrainEvent
+import com.stackbleedctrl.pollen.oslayer.BrainEventBus
 import com.stackbleedctrl.pollen.security.NodeTrustManager
 import com.stackbleedctrl.pollen.tracing.PollenTracer
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,7 +26,8 @@ import javax.inject.Singleton
 class NearbyMeshCoordinator @Inject constructor(
     @ApplicationContext context: Context,
     private val trustManager: NodeTrustManager,
-    private val tracer: PollenTracer
+    private val tracer: PollenTracer,
+    private val bus: BrainEventBus
 ) {
     private val client: ConnectionsClient = Nearby.getConnectionsClient(context)
     private val serviceId = context.packageName
@@ -33,16 +36,23 @@ class NearbyMeshCoordinator @Inject constructor(
 
     fun start() {
         tracer.trace("mesh", "start advertise + discover")
+        emitMeshStatus("Starting advertise + discover")
+
         client.startAdvertising(
             localName,
             serviceId,
             lifecycle,
-            AdvertisingOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
+            AdvertisingOptions.Builder()
+                .setStrategy(Strategy.P2P_CLUSTER)
+                .build()
         )
+
         client.startDiscovery(
             serviceId,
             discovery,
-            DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
+            DiscoveryOptions.Builder()
+                .setStrategy(Strategy.P2P_CLUSTER)
+                .build()
         )
     }
 
@@ -50,55 +60,111 @@ class NearbyMeshCoordinator @Inject constructor(
         client.stopAllEndpoints()
         client.stopAdvertising()
         client.stopDiscovery()
+        peers.clear()
+        emitMeshStatus("Mesh stopped")
     }
 
     fun peers(): List<PeerNode> = peers.values.toList()
 
     fun broadcast(text: String) {
-        peers.keys.forEach { id ->
-            client.sendPayload(id, Payload.fromBytes(text.toByteArray()))
+        val connectedPeers = peers.filterValues { it.connected }
+
+        if (connectedPeers.isEmpty()) {
+            emitMeshStatus("No connected peers to send payload")
+            return
         }
+
+        connectedPeers.keys.forEach { endpointId ->
+            client.sendPayload(endpointId, Payload.fromBytes(text.toByteArray()))
+        }
+
+        emitMeshStatus("Payload sent to ${connectedPeers.size} peer(s)")
+    }
+
+    private fun connectedPeerCount(): Int =
+        peers.values.count { it.connected }
+
+    private fun emitMeshStatus(text: String) {
+        tracer.trace("mesh", text)
+        bus.tryEmit(BrainEvent.MeshStatus(text))
+        bus.tryEmit(BrainEvent.PeerCountChanged(connectedPeerCount()))
     }
 
     private val lifecycle = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
+            peers[endpointId] = PeerNode(
+                id = endpointId,
+                name = info.endpointName,
+                connected = false
+            )
+
+            emitMeshStatus("Connection initiated: ${info.endpointName}")
             client.acceptConnection(endpointId, payloads)
-            peers[endpointId] = PeerNode(endpointId, info.endpointName, connected = false)
         }
 
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
             val connected = result.status.isSuccess
+
             peers[endpointId] =
                 peers[endpointId]?.copy(connected = connected)
-                    ?: PeerNode(endpointId, endpointId, connected)
-            trustManager.notePeer(endpointId)
+                    ?: PeerNode(
+                        id = endpointId,
+                        name = endpointId,
+                        connected = connected
+                    )
+
+            if (connected) {
+                trustManager.notePeer(endpointId)
+                emitMeshStatus("Connected node: $endpointId")
+            } else {
+                emitMeshStatus("Connection failed: ${result.status.statusCode}")
+            }
         }
 
         override fun onDisconnected(endpointId: String) {
             peers[endpointId] =
                 peers[endpointId]?.copy(connected = false)
-                    ?: PeerNode(endpointId, endpointId, false)
+                    ?: PeerNode(
+                        id = endpointId,
+                        name = endpointId,
+                        connected = false
+                    )
+
+            emitMeshStatus("Disconnected node: $endpointId")
         }
     }
 
     private val discovery = object : EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-            peers[endpointId] = PeerNode(endpointId, info.endpointName, connected = false)
+            peers[endpointId] = PeerNode(
+                id = endpointId,
+                name = info.endpointName,
+                connected = false
+            )
+
+            emitMeshStatus("Found node: ${info.endpointName}")
             client.requestConnection(localName, endpointId, lifecycle)
         }
 
         override fun onEndpointLost(endpointId: String) {
             peers.remove(endpointId)
+            emitMeshStatus("Lost node: $endpointId")
         }
     }
 
     private val payloads = object : PayloadCallback() {
         override fun onPayloadReceived(endpointId: String, payload: Payload) {
             val text = payload.asBytes()?.decodeToString() ?: return
+
             tracer.trace("mesh", "received from=$endpointId msg=$text")
             trustManager.notePeer(endpointId)
+
+            emitMeshStatus("Received from $endpointId: $text")
         }
 
-        override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) = Unit
+        override fun onPayloadTransferUpdate(
+            endpointId: String,
+            update: PayloadTransferUpdate
+        ) = Unit
     }
 }
