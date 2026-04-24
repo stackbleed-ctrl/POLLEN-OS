@@ -43,7 +43,20 @@ class MainViewModel @Inject constructor(
             appendDebug("intent submitted")
         }
     }
+    fun startBrain() {
+    appendDebug("START BRAIN pressed")
+    state = state.copy(meshStatus = "Starting brain service...")
+}
 
+fun permissionsReady() {
+    appendDebug("permissions ready")
+    state = state.copy(meshStatus = "Permissions ready")
+}
+
+fun permissionsDenied(denied: String) {
+    appendDebug("permissions denied: $denied")
+    state = state.copy(meshStatus = "Permissions missing")
+}
     fun meshPing() {
         appendDebug("PING pressed")
 

@@ -34,8 +34,12 @@ class MainActivity : ComponentActivity() {
                 PollenDashboardScreen(
                     state = vm.state,
                     onStartService = {
-                        ContextCompat.startForegroundService(this, Intent(this, PollenBrainService::class.java))
-                    },
+    vm.startBrain()
+    ContextCompat.startForegroundService(
+        this,
+        Intent(this, PollenBrainService::class.java)
+    )
+},
                     onSubmitIntent = vm::submitIntent,
                     onMeshPing = vm::meshPing
                 )
