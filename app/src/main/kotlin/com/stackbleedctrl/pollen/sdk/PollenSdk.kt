@@ -1,9 +1,9 @@
 package com.stackbleedctrl.pollen.sdk
 
 import com.stackbleedctrl.pollen.core.model.BrainDecision
+import com.stackbleedctrl.pollen.core.model.PhoneEvent
 import com.stackbleedctrl.pollen.oslayer.BrainEvent
 import com.stackbleedctrl.pollen.oslayer.BrainEventBus
-import com.stackbleedctrl.pollen.oslayer.PollenBrainService
 import com.stackbleedctrl.pollen.swarm.SwarmCoordinator
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 
 @Singleton
 class PollenSdk @Inject constructor(
@@ -26,6 +25,7 @@ class PollenSdk @Inject constructor(
     inner class BrainHandle {
         private var decisionHandler: ((BrainDecision) -> Unit)? = null
         private var meshHandler: ((String) -> Unit)? = null
+        private var peerCountHandler: ((Int) -> Unit)? = null
 
         fun handleDecision(block: (BrainDecision) -> Unit) {
             decisionHandler = block
@@ -35,11 +35,16 @@ class PollenSdk @Inject constructor(
             meshHandler = block
         }
 
+        fun handlePeerCount(block: (Int) -> Unit) {
+            peerCountHandler = block
+        }
+
         init {
             bus.events.onEach { event ->
                 when (event) {
                     is BrainEvent.DecisionMade -> decisionHandler?.invoke(event.decision)
                     is BrainEvent.MeshStatus -> meshHandler?.invoke(event.text)
+                    is BrainEvent.PeerCountChanged -> peerCountHandler?.invoke(event.count)
                     else -> Unit
                 }
             }.launchIn(scope)
@@ -47,7 +52,7 @@ class PollenSdk @Inject constructor(
     }
 
     suspend fun submitIntent(raw: String) {
-        bus.emit(BrainEvent.InputEvent(com.stackbleedctrl.pollen.core.model.PhoneEvent.UserIntent(raw)))
+        bus.emit(BrainEvent.InputEvent(PhoneEvent.UserIntent(raw)))
     }
 
     suspend fun meshPing() {

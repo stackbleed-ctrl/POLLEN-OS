@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
-sealed class BrainEvent {
+sealed class BrainEvent {data class PeerCountChanged(val count: Int) : BrainEvent()
     data class InputEvent(val event: PhoneEvent) : BrainEvent()
     data class DecisionMade(val decision: BrainDecision) : BrainEvent()
     data class MeshStatus(val text: String) : BrainEvent()

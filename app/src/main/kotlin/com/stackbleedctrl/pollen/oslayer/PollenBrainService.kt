@@ -39,12 +39,14 @@ class PollenBrainService : Service() {
         createChannel()
         startForeground(1001, notification("Pollen active"))
         swarm.start()
+        bus.tryEmit(BrainEvent.MeshStatus("Brain service started"))
         bus.events.onEach { event ->
-            when (event) {
-                is BrainEvent.InputEvent -> handle(event.event)
-                is BrainEvent.MeshStatus -> updateNotification(event.text)
-                is BrainEvent.DecisionMade -> updateNotification(event.decision.summary)
-            }
+          when (event) {
+    is BrainEvent.InputEvent -> handle(event.event)
+    is BrainEvent.MeshStatus -> updateNotification(event.text)
+    is BrainEvent.DecisionMade -> updateNotification(event.decision.summary)
+    is BrainEvent.PeerCountChanged -> updateNotification("Peers: ${event.count}")
+  }
         }.launchIn(scope)
     }
 
