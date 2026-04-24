@@ -1,25 +1,43 @@
 package com.stackbleedctrl.pollen
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.stackbleedctrl.pollen.identity.DeviceIdProvider
+import com.stackbleedctrl.pollen.mesh.MeshPacket
+import com.stackbleedctrl.pollen.mesh.MeshPacketType
 import com.stackbleedctrl.pollen.sdk.PollenSdk
+import com.stackbleedctrl.pollen.tasks.AlphaTaskState
+import com.stackbleedctrl.pollen.tasks.AlphaTaskType
+import com.stackbleedctrl.pollen.tasks.TaskStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val sdk: PollenSdk
+    private val sdk: PollenSdk,
+    @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
-    var state by mutableStateOf(PollenUiState())
+    var state by mutableStateOf(
+        PollenUiState(
+            identity = DeviceIdProvider.getIdentity(appContext)
+        )
+    )
         private set
 
     init {
         appendDebug("MainViewModel started")
+        logEvent("Alpha 0.2 dashboard initialized")
 
         sdk.brain.handleDecision { decision ->
             appendDebug("decision: ${decision.summary}")
@@ -30,10 +48,12 @@ class MainViewModel @Inject constructor(
             appendDebug("brain mesh status: $status")
             state = state.copy(meshStatus = status)
         }
+
         sdk.brain.handlePeerCount { count ->
-    appendDebug("peer count: $count")
-    state = state.copy(peerCount = count)
-}
+            appendDebug("peer count: $count")
+            state = state.copy(peerCount = count)
+        }
+
         appendDebug("Waiting for Start brain")
     }
 
@@ -46,27 +66,115 @@ class MainViewModel @Inject constructor(
             appendDebug("intent submitted")
         }
     }
+
     fun startBrain() {
-    appendDebug("START BRAIN pressed")
-    state = state.copy(meshStatus = "Starting brain service...")
-}
+        appendDebug("START BRAIN pressed")
+        logEvent("Start brain pressed")
+        state = state.copy(meshStatus = "Starting brain service...")
+    }
 
-fun permissionsReady() {
-    appendDebug("permissions ready")
-    state = state.copy(meshStatus = "Permissions ready")
-}
+    fun permissionsReady() {
+        appendDebug("permissions ready")
+        logEvent("Permissions ready")
+        state = state.copy(meshStatus = "Permissions ready")
+    }
 
-fun permissionsDenied(denied: String) {
-    appendDebug("permissions denied: $denied")
-    state = state.copy(meshStatus = "Permissions missing")
-}
+    fun permissionsDenied(denied: String) {
+        appendDebug("permissions denied: $denied")
+        logEvent("Permissions denied: $denied")
+        state = state.copy(meshStatus = "Permissions missing")
+    }
+
     fun meshPing() {
         appendDebug("PING pressed")
+        logEvent("Ping requested")
 
         viewModelScope.launch {
             sdk.meshPing()
             appendDebug("sdk.meshPing called")
+            logEvent("sdk.meshPing called")
         }
+    }
+
+    fun createTaskPacket(taskType: AlphaTaskType, targetNodeId: String? = null): MeshPacket {
+        val identity = state.identity ?: DeviceIdProvider.getIdentity(appContext)
+        val taskId = UUID.randomUUID().toString().take(8)
+
+        val packet = MeshPacket(
+            type = MeshPacketType.TASK_REQUEST,
+            fromNodeId = identity.nodeId,
+            toNodeId = targetNodeId,
+            taskId = taskId,
+            taskType = taskType.name,
+            payload = when (taskType) {
+                AlphaTaskType.MESH_ECHO -> "POLLEN mesh echo from ${identity.displayName}"
+                else -> null
+            }
+        )
+
+        val newTask = AlphaTaskState(
+            taskId = taskId,
+            taskType = taskType.name,
+            targetNodeId = targetNodeId,
+            status = TaskStatus.PENDING
+        )
+
+        state = state.copy(
+            tasks = listOf(newTask) + state.tasks
+        )
+
+        appendDebug("task created: ${taskType.name}")
+        logEvent("Task created: ${taskType.name}")
+
+        return packet
+    }
+
+    fun onTaskResult(packet: MeshPacket) {
+        val taskId = packet.taskId ?: return
+
+        val updatedTasks = state.tasks.map { task ->
+            if (task.taskId == taskId) {
+                task.copy(
+                    status = if (packet.success == true) TaskStatus.COMPLETED else TaskStatus.FAILED,
+                    result = packet.payload,
+                    completedAt = System.currentTimeMillis()
+                )
+            } else {
+                task
+            }
+        }
+
+        state = state.copy(tasks = updatedTasks)
+
+        appendDebug("task result: ${packet.taskType} ${packet.payload}")
+        logEvent("Task result: ${packet.taskType} → ${packet.payload}")
+    }
+
+    fun simulateLocalTask(taskType: AlphaTaskType) {
+        val packet = createTaskPacket(taskType)
+
+        val simulatedResult = MeshPacket(
+            type = MeshPacketType.TASK_RESULT,
+            fromNodeId = packet.fromNodeId,
+            taskId = packet.taskId,
+            taskType = packet.taskType,
+            payload = when (taskType) {
+                AlphaTaskType.DEVICE_STATUS -> "ONLINE"
+                AlphaTaskType.BATTERY_STATUS -> "Battery check ready for mesh wiring"
+                AlphaTaskType.LOCAL_TIMESTAMP -> System.currentTimeMillis().toString()
+                AlphaTaskType.MESH_ECHO -> packet.payload ?: "EMPTY_ECHO"
+                AlphaTaskType.NODE_HEALTH -> "Node healthy · peers=${state.peerCount} · mesh=${state.meshStatus}"
+            },
+            success = true
+        )
+
+        onTaskResult(simulatedResult)
+    }
+
+    fun logEvent(message: String) {
+        val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+        val updated = listOf("[$timestamp] $message") + state.eventLog
+        state = state.copy(eventLog = updated.take(50))
     }
 
     private fun appendDebug(line: String) {

@@ -32,6 +32,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.stackbleedctrl.pollen.identity.DeviceIdentity
+import com.stackbleedctrl.pollen.tasks.AlphaTaskState
+import com.stackbleedctrl.pollen.tasks.AlphaTaskType
 import com.stackbleedctrl.pollen.ui.PollenColors.DeepPanel
 import com.stackbleedctrl.pollen.ui.PollenColors.DeepPanel2
 import com.stackbleedctrl.pollen.ui.PollenColors.Gold
@@ -48,9 +51,13 @@ fun PollenConsoleScreen(
     lastDecision: String = "Waiting",
     meshStatus: String = "Idle",
     debugLines: List<String> = emptyList(),
+    identity: DeviceIdentity? = null,
+    tasks: List<AlphaTaskState> = emptyList(),
+    eventLog: List<String> = emptyList(),
     onStartBrain: () -> Unit = {},
     onRunIntent: () -> Unit = {},
-    onMeshPing: () -> Unit = {}
+    onMeshPing: () -> Unit = {},
+    onAlphaTask: (AlphaTaskType) -> Unit = {}
 ) {
     val visibleIntent = lastIntent.ifBlank { "Mesh Health Check" }
     val visibleDecision = lastDecision.ifBlank { "Waiting" }
@@ -71,6 +78,17 @@ fun PollenConsoleScreen(
                 connected = connected,
                 peerCount = peerCount
             )
+
+            PremiumPanel {
+                SectionTitle("DEVICE IDENTITY")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                InfoLine("Name", identity?.displayName ?: "POLLEN Node")
+                InfoLine("Node ID", identity?.nodeId ?: "Creating identity")
+                InfoLine("Model", identity?.modelName ?: "Unknown")
+                InfoLine("Role", identity?.role?.name ?: "WORKER")
+            }
 
             PremiumPanel {
                 SectionTitle("BRAIN STATUS")
@@ -115,18 +133,64 @@ fun PollenConsoleScreen(
                 InfoLine("Visible peers", peerCount.toString())
                 InfoLine("Active test", "Peer Discovery Test")
                 InfoLine("Task routing", if (connected) "Peer route available" else "Local device")
-                InfoLine("Queue", "No pending tasks")
+                InfoLine("Queue", "${tasks.count { it.status.name == "PENDING" }} pending")
             }
 
             PremiumPanel {
-                SectionTitle("ALPHA TEST TASKS")
+                SectionTitle("ALPHA TASK CONTROLS")
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                InfoLine("Primary", "Mesh Health Check")
-                InfoLine("Secondary", "Connection Recovery Test")
-                InfoLine("Ping test", "Send Mesh Ping")
-                InfoLine("Status sync", "Device Status Sync")
+                GoldButton("Device Status") {
+                    onAlphaTask(AlphaTaskType.DEVICE_STATUS)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Battery Status") {
+                    onAlphaTask(AlphaTaskType.BATTERY_STATUS)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Mesh Echo") {
+                    onAlphaTask(AlphaTaskType.MESH_ECHO)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Node Health") {
+                    onAlphaTask(AlphaTaskType.NODE_HEALTH)
+                }
+            }
+
+            PremiumPanel {
+                SectionTitle("TASK CONSOLE")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (tasks.isEmpty()) {
+                    InfoLine("Status", "No alpha tasks yet")
+                } else {
+                    tasks.take(6).forEach { task ->
+                        TaskLine(task)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+
+            PremiumPanel {
+                SectionTitle("EVENT FEED")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (eventLog.isEmpty()) {
+                    InfoLine("Status", "Waiting for mesh events")
+                } else {
+                    eventLog.take(10).forEachIndexed { index, line ->
+                        InfoLine("#${index + 1}", line)
+                    }
+                }
             }
 
             PremiumPanel {
@@ -162,7 +226,7 @@ private fun Header(
         )
 
         Text(
-            text = "BRAIN MESH CONTROL",
+            text = "ALPHA 0.2 · LIVE MESH TASK LAYER",
             color = Color(0xFF55514A),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold
@@ -252,6 +316,40 @@ private fun InfoLine(label: String, value: String) {
 }
 
 @Composable
+private fun TaskLine(task: AlphaTaskState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF111418), RoundedCornerShape(14.dp))
+            .border(1.dp, Gold.copy(alpha = 0.25f), RoundedCornerShape(14.dp))
+            .padding(12.dp)
+    ) {
+        Text(
+            text = task.taskType,
+            color = TextPrimary,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = "Status: ${task.status}",
+            color = GoldSoft,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        task.result?.let { result ->
+            Text(
+                text = "Result: $result",
+                color = TextMuted,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
 private fun GoldButton(
     text: String,
     modifier: Modifier = Modifier,
@@ -259,7 +357,7 @@ private fun GoldButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.height(74.dp),
+        modifier = modifier.height(64.dp),
         shape = RoundedCornerShape(18.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = Color(0xFFE7E3DA),

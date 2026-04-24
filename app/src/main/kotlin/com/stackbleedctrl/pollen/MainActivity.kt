@@ -44,6 +44,9 @@ class MainActivity : ComponentActivity() {
                 lastDecision = vm.state.lastDecision,
                 meshStatus = vm.state.meshStatus,
                 debugLines = vm.state.debugLines,
+                identity = vm.state.identity,
+                tasks = vm.state.tasks,
+                eventLog = vm.state.eventLog,
                 onStartBrain = {
                     vm.startBrain()
                     ContextCompat.startForegroundService(
@@ -54,7 +57,8 @@ class MainActivity : ComponentActivity() {
                 onRunIntent = {
                     vm.submitIntent("Mesh Health Check")
                 },
-                onMeshPing = vm::meshPing
+                onMeshPing = vm::meshPing,
+                onAlphaTask = vm::simulateLocalTask
             )
         }
     }
