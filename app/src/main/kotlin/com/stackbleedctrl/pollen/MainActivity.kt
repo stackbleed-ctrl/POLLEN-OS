@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import com.stackbleedctrl.pollen.oslayer.PollenBrainService
+import com.stackbleedctrl.pollen.tasks.TaskStatus
 import com.stackbleedctrl.pollen.ui.PollenConsoleScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -37,24 +38,35 @@ class MainActivity : ComponentActivity() {
         requestPollenPermissions()
 
         setContent {
+            val uiState = vm.state
+            val completedCount = uiState.tasks.count { it.status == TaskStatus.COMPLETED }
+            val failedCount = uiState.tasks.count { it.status == TaskStatus.FAILED }
+            val pendingCount = uiState.tasks.count { it.status == TaskStatus.PENDING }
+            val averageLatencyMs = uiState.tasks
+                .mapNotNull { it.latencyMs }
+                .filter { it >= 0L }
+                .takeIf { it.isNotEmpty() }
+                ?.average()
+                ?.toLong()
+
             PollenConsoleScreen(
-                connected = vm.state.peerCount > 0,
-                peerCount = vm.state.peerCount,
-                lastIntent = vm.state.lastIntent.ifBlank { "Mesh Health Check" },
-                lastDecision = vm.state.lastDecision,
-                meshStatus = vm.state.meshStatus,
-                debugLines = vm.state.debugLines,
-                identity = vm.state.identity,
-                tasks = vm.state.tasks,
-                eventLog = vm.state.eventLog,
-                fullTestRunning = vm.state.fullTestRunning,
-                rangeProbeRunning = vm.state.rangeProbeRunning,
-                rangeProbeSent = vm.state.rangeProbeSent,
-                rangeProbeTotal = vm.state.rangeProbeTotal,
-                averageLatencyMs = vm.averageLatencyMs(),
-                completedCount = vm.completedTaskCount(),
-                failedCount = vm.failedTaskCount(),
-                pendingCount = vm.pendingTaskCount(),
+                connected = uiState.peerCount > 0,
+                peerCount = uiState.peerCount,
+                lastIntent = uiState.lastIntent.ifBlank { "Mesh Health Check" },
+                lastDecision = uiState.lastDecision,
+                meshStatus = uiState.meshStatus,
+                debugLines = uiState.debugLines,
+                identity = uiState.identity,
+                tasks = uiState.tasks,
+                eventLog = uiState.eventLog,
+                fullTestRunning = uiState.fullTestRunning,
+                rangeProbeRunning = uiState.rangeProbeRunning,
+                rangeProbeSent = uiState.rangeProbeSent,
+                rangeProbeTotal = uiState.rangeProbeTotal,
+                averageLatencyMs = averageLatencyMs,
+                completedCount = completedCount,
+                failedCount = failedCount,
+                pendingCount = pendingCount,
                 onStartBrain = {
                     vm.startBrain()
                     ContextCompat.startForegroundService(

@@ -203,20 +203,38 @@ fun PollenConsoleScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                GoldButton("Beacon Peer") {
+                GoldButton("Beacon Peer · Vibration") {
                     onAlphaTask(AlphaTaskType.BEACON_PEER)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                GoldButton("Location Snapshot") {
+                GoldButton("Location Snapshot · Sensitive") {
                     onAlphaTask(AlphaTaskType.LOCATION_SNAPSHOT)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Send Field Note") {
+                    onAlphaTask(AlphaTaskType.FIELD_NOTE)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Sim Help Signal · Test Only") {
+                    onAlphaTask(AlphaTaskType.SIMULATED_HELP_SIGNAL)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 GoldButton("Mesh Echo") {
                     onAlphaTask(AlphaTaskType.MESH_ECHO)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Ping Peer") {
+                    onAlphaTask(AlphaTaskType.PING)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))

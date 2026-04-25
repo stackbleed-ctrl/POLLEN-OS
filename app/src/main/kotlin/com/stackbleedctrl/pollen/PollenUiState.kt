@@ -10,6 +10,9 @@ data class PollenUiState(
     val peerCount: Int = 0,
     val debugLines: List<String> = emptyList(),
 
+    val lastPeerLabel: String = "",
+    val trustedPeerLabel: String = "",
+
     val identity: DeviceIdentity? = null,
     val tasks: List<AlphaTaskState> = emptyList(),
     val eventLog: List<String> = emptyList(),

@@ -17,8 +17,11 @@ enum class AlphaTaskType {
     DEVICE_VITALS,
     BEACON_PEER,
     LOCATION_SNAPSHOT,
+    FIELD_NOTE,
+    SIMULATED_HELP_SIGNAL,
     LOCAL_TIMESTAMP,
     MESH_ECHO,
+    PING,
     NODE_HEALTH
 }
 
@@ -95,6 +98,26 @@ class AlphaTaskEngine(
                 )
             }
 
+            AlphaTaskType.FIELD_NOTE.name -> {
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = true,
+                    payload = "FIELD_NOTE_RECEIVED: ${packet.payload ?: "No note payload"}"
+                )
+            }
+
+            AlphaTaskType.SIMULATED_HELP_SIGNAL.name -> {
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = true,
+                    payload = "SIMULATION_ACK: help signal received by node $nodeId"
+                )
+            }
+
             AlphaTaskType.LOCAL_TIMESTAMP.name -> {
                 result(
                     nodeId = nodeId,
@@ -112,6 +135,16 @@ class AlphaTaskEngine(
                     taskType = taskType,
                     success = true,
                     payload = packet.payload ?: "EMPTY_ECHO"
+                )
+            }
+
+            AlphaTaskType.PING.name -> {
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = true,
+                    payload = "PONG · node=$nodeId · battery=${batteryPercent()}%"
                 )
             }
 

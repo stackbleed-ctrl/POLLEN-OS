@@ -119,6 +119,9 @@ class MainViewModel @Inject constructor(
             taskType = taskType.name,
             payload = when (taskType) {
                 AlphaTaskType.MESH_ECHO -> "POLLEN mesh echo from ${identity.displayName}"
+                AlphaTaskType.PING -> "PING from ${identity.displayName}"
+                AlphaTaskType.FIELD_NOTE -> "Field note from ${identity.displayName}: Alpha test note received over POLLEN mesh."
+                AlphaTaskType.SIMULATED_HELP_SIGNAL -> "SIMULATION ONLY: Help signal test from ${identity.displayName}"
                 else -> null
             }
         )
@@ -244,7 +247,9 @@ class MainViewModel @Inject constructor(
                 AlphaTaskType.BATTERY_STATUS,
                 AlphaTaskType.DEVICE_VITALS,
                 AlphaTaskType.LOCATION_SNAPSHOT,
+                AlphaTaskType.FIELD_NOTE,
                 AlphaTaskType.MESH_ECHO,
+                AlphaTaskType.PING,
                 AlphaTaskType.NODE_HEALTH,
                 AlphaTaskType.LOCAL_TIMESTAMP
             )
@@ -267,6 +272,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun sendAlphaTask(taskType: AlphaTaskType) {
+        logSensitiveTaskNotice(taskType)
+
         val packet = createTaskPacket(taskType)
         val taskId = packet.taskId
 
@@ -284,6 +291,32 @@ class MainViewModel @Inject constructor(
 
         if (taskId != null) {
             scheduleTaskTimeout(taskId)
+        }
+    }
+
+    private fun logSensitiveTaskNotice(taskType: AlphaTaskType) {
+        when (taskType) {
+            AlphaTaskType.LOCATION_SNAPSHOT -> {
+                if (state.trustedPeerLabel.isBlank()) {
+                    appendDebug("sensitive task warning: LOCATION_SNAPSHOT without trusted peer")
+                    logEvent("Sensitive alpha task: LOCATION_SNAPSHOT sent without trusted peer")
+                } else {
+                    appendDebug("sensitive task approved for trusted peer: LOCATION_SNAPSHOT")
+                    logEvent("Sensitive alpha task: LOCATION_SNAPSHOT for trusted peer")
+                }
+            }
+
+            AlphaTaskType.SIMULATED_HELP_SIGNAL -> {
+                appendDebug("simulation notice: SIMULATED_HELP_SIGNAL is not an emergency alert")
+                logEvent("Simulation only: help signal test")
+            }
+
+            AlphaTaskType.BEACON_PEER -> {
+                appendDebug("beacon notice: BEACON_PEER may trigger local vibration")
+                logEvent("Beacon peer requested: local vibration alert")
+            }
+
+            else -> Unit
         }
     }
 
@@ -332,8 +365,11 @@ class MainViewModel @Inject constructor(
                 AlphaTaskType.DEVICE_VITALS -> "Device vitals ready for mesh wiring"
                 AlphaTaskType.BEACON_PEER -> "Beacon simulation complete"
                 AlphaTaskType.LOCATION_SNAPSHOT -> "Location snapshot ready for mesh wiring"
+                AlphaTaskType.FIELD_NOTE -> "Field note simulation complete"
+                AlphaTaskType.SIMULATED_HELP_SIGNAL -> "SIMULATION ONLY: Help signal simulation complete"
                 AlphaTaskType.LOCAL_TIMESTAMP -> System.currentTimeMillis().toString()
                 AlphaTaskType.MESH_ECHO -> packet.payload ?: "EMPTY_ECHO"
+                AlphaTaskType.PING -> "PONG · local simulation · peers=${state.peerCount}"
                 AlphaTaskType.NODE_HEALTH -> "Node healthy · peers=${state.peerCount} · mesh=${state.meshStatus}"
             },
             success = true
