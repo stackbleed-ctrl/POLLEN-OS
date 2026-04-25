@@ -89,6 +89,8 @@ class MainActivity : ComponentActivity() {
                 },
                 onMeshPing = vm::meshPing,
                 onAlphaTask = vm::sendAlphaTask,
+                onTrustSelectedPeer = vm::trustSelectedPeer,
+                onClearTrustedPeer = vm::clearTrustedPeer,
                 onExportLogs = ::shareTesterLog,
                 onRunFullMeshTest = vm::runFullMeshTest,
                 onRunRangeProbe = vm::runRangeProbe

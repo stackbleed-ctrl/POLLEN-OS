@@ -95,6 +95,8 @@ fun PollenConsoleScreen(
     onRunIntent: () -> Unit = {},
     onMeshPing: () -> Unit = {},
     onAlphaTask: (AlphaTaskType) -> Unit = {},
+    onTrustSelectedPeer: () -> Unit = {},
+    onClearTrustedPeer: () -> Unit = {},
     onExportLogs: () -> Unit = {},
     onRunFullMeshTest: () -> Unit = {},
     onRunRangeProbe: () -> Unit = {},
@@ -385,6 +387,14 @@ fun PollenConsoleScreen(
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Trust Selected Peer") {
+                    onTrustSelectedPeer()
+                }
+
+                GoldButton("Clear Trust") {
+                    onClearTrustedPeer()
+                }
 
                 GoldButton("Location Snapshot · Trusted Only") {
                     onAlphaTask(AlphaTaskType.LOCATION_SNAPSHOT)
