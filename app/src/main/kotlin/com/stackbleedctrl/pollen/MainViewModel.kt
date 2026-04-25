@@ -576,7 +576,7 @@ fun brainServiceStarted() {
     fun sendAlphaTask(taskType: AlphaTaskType) {
         if (taskType == AlphaTaskType.LOCATION_SNAPSHOT && state.trustedPeerLabel.isBlank()) {
             appendDebug("blocked sensitive task: LOCATION_SNAPSHOT requires trusted peer")
-            logEvent("Blocked LOCATION_SNAPSHOT: trust peer first")
+            logEvent("Sensitive task blocked: LOCATION_SNAPSHOT · peer not trusted")
             runAi(
                 AiSignal(
                     type = AiSignalType.SENSITIVE_TASK_NOTICE,
@@ -709,8 +709,8 @@ fun brainServiceStarted() {
                         )
                     )
                 } else {
-                    appendDebug("sensitive task approved for trusted peer: LOCATION_SNAPSHOT")
-                    logEvent("Sensitive alpha task: LOCATION_SNAPSHOT for trusted peer")
+                    appendDebug("sensitive task approved: LOCATION_SNAPSHOT for ${state.trustedPeerLabel}")
+                    logEvent("Sensitive task approved: LOCATION_SNAPSHOT · trusted peer ${state.trustedPeerLabel}")
                     runAi(
                         AiSignal(
                             type = AiSignalType.SENSITIVE_TASK_NOTICE,
@@ -726,7 +726,7 @@ fun brainServiceStarted() {
 
             AlphaTaskType.SIMULATED_HELP_SIGNAL -> {
                 appendDebug("simulation notice: SIMULATED_HELP_SIGNAL is not an emergency alert")
-                logEvent("Simulation only: help signal test")
+                logEvent("Simulation only: SIMULATED_HELP_SIGNAL is not an emergency alert")
             }
 
             AlphaTaskType.BEACON_PEER -> {
