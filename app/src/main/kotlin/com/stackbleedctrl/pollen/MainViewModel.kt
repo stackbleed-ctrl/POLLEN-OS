@@ -6,6 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.stackbleedctrl.pollen.ai.AiSignal
+import com.stackbleedctrl.pollen.ai.AiSignalType
+import com.stackbleedctrl.pollen.ai.PollenAiEngine
 import com.stackbleedctrl.pollen.identity.DeviceIdProvider
 import com.stackbleedctrl.pollen.mesh.MeshPacket
 import com.stackbleedctrl.pollen.mesh.MeshPacketType
@@ -30,6 +33,7 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val taskTimeoutMs = 8_000L
+    private val aiEngine = PollenAiEngine()
 
     var state by mutableStateOf(
         PollenUiState(
@@ -63,6 +67,15 @@ class MainViewModel @Inject constructor(
         sdk.brain.handlePeerCount { count ->
             appendDebug("peer count: $count")
             state = state.copy(peerCount = count)
+            runAi(
+                AiSignal(
+                    type = AiSignalType.PEER_COUNT_CHANGED,
+                    message = "Peer count changed",
+                    peerCount = count,
+                    meshStatus = state.meshStatus,
+                    trustedPeerLabel = state.trustedPeerLabel
+                )
+            )
         }
 
         appendDebug("Waiting for Start brain")
@@ -82,18 +95,45 @@ class MainViewModel @Inject constructor(
         appendDebug("START BRAIN pressed")
         logEvent("Start brain pressed")
         state = state.copy(meshStatus = "Starting brain service...")
+        runAi(
+            AiSignal(
+                type = AiSignalType.BRAIN_STARTED,
+                message = "Brain started",
+                peerCount = state.peerCount,
+                meshStatus = state.meshStatus,
+                trustedPeerLabel = state.trustedPeerLabel
+            )
+        )
     }
 
     fun permissionsReady() {
         appendDebug("permissions ready")
         logEvent("Permissions ready")
         state = state.copy(meshStatus = "Permissions ready")
+        runAi(
+            AiSignal(
+                type = AiSignalType.PERMISSIONS_READY,
+                message = "Permissions ready",
+                peerCount = state.peerCount,
+                meshStatus = state.meshStatus,
+                trustedPeerLabel = state.trustedPeerLabel
+            )
+        )
     }
 
     fun permissionsDenied(denied: String) {
         appendDebug("permissions denied: $denied")
         logEvent("Permissions denied: $denied")
         state = state.copy(meshStatus = "Permissions missing")
+        runAi(
+            AiSignal(
+                type = AiSignalType.PERMISSIONS_DENIED,
+                message = denied,
+                peerCount = state.peerCount,
+                meshStatus = state.meshStatus,
+                trustedPeerLabel = state.trustedPeerLabel
+            )
+        )
     }
 
     fun meshPing() {
@@ -139,6 +179,16 @@ class MainViewModel @Inject constructor(
 
         appendDebug("task created: ${taskType.name}")
         logEvent("Task created: ${taskType.name}")
+        runAi(
+            AiSignal(
+                type = AiSignalType.TASK_CREATED,
+                message = "Task created",
+                peerCount = state.peerCount,
+                meshStatus = state.meshStatus,
+                trustedPeerLabel = state.trustedPeerLabel,
+                taskType = taskType.name
+            )
+        )
 
         return packet
     }
@@ -176,8 +226,23 @@ class MainViewModel @Inject constructor(
 
         state = state.copy(tasks = updatedTasks)
 
+        val updatedTask = updatedTasks.firstOrNull { it.taskId == taskId }
+
         appendDebug("task result: ${packet.taskType} ${packet.payload}")
         logEvent("Task result: ${packet.taskType} → ${packet.payload}")
+        runAi(
+            AiSignal(
+                type = AiSignalType.TASK_RESULT,
+                message = "Task result received",
+                peerCount = state.peerCount,
+                meshStatus = state.meshStatus,
+                trustedPeerLabel = state.trustedPeerLabel,
+                taskType = packet.taskType,
+                payload = packet.payload,
+                success = packet.success,
+                latencyMs = updatedTask?.latencyMs
+            )
+        )
     }
 
 
@@ -283,9 +348,29 @@ class MainViewModel @Inject constructor(
             if (sent) {
                 appendDebug("targeted mesh task sent: ${packet.taskType}")
                 logEvent("Targeted task sent: ${packet.taskType}")
+                runAi(
+                    AiSignal(
+                        type = AiSignalType.TASK_SENT,
+                        message = "Task sent",
+                        peerCount = state.peerCount,
+                        meshStatus = state.meshStatus,
+                        trustedPeerLabel = state.trustedPeerLabel,
+                        taskType = packet.taskType
+                    )
+                )
             } else {
                 appendDebug("targeted mesh task failed: no peer")
                 logEvent("No peer available for task: ${packet.taskType}")
+                runAi(
+                    AiSignal(
+                        type = AiSignalType.ERROR,
+                        message = "No peer available for task: ${packet.taskType}",
+                        peerCount = state.peerCount,
+                        meshStatus = state.meshStatus,
+                        trustedPeerLabel = state.trustedPeerLabel,
+                        taskType = packet.taskType
+                    )
+                )
             }
         }
 
@@ -300,9 +385,29 @@ class MainViewModel @Inject constructor(
                 if (state.trustedPeerLabel.isBlank()) {
                     appendDebug("sensitive task warning: LOCATION_SNAPSHOT without trusted peer")
                     logEvent("Sensitive alpha task: LOCATION_SNAPSHOT sent without trusted peer")
+                    runAi(
+                        AiSignal(
+                            type = AiSignalType.SENSITIVE_TASK_NOTICE,
+                            message = "LOCATION_SNAPSHOT without trusted peer",
+                            peerCount = state.peerCount,
+                            meshStatus = state.meshStatus,
+                            trustedPeerLabel = state.trustedPeerLabel,
+                            taskType = taskType.name
+                        )
+                    )
                 } else {
                     appendDebug("sensitive task approved for trusted peer: LOCATION_SNAPSHOT")
                     logEvent("Sensitive alpha task: LOCATION_SNAPSHOT for trusted peer")
+                    runAi(
+                        AiSignal(
+                            type = AiSignalType.SENSITIVE_TASK_NOTICE,
+                            message = "LOCATION_SNAPSHOT for trusted peer",
+                            peerCount = state.peerCount,
+                            meshStatus = state.meshStatus,
+                            trustedPeerLabel = state.trustedPeerLabel,
+                            taskType = taskType.name
+                        )
+                    )
                 }
             }
 
@@ -348,6 +453,16 @@ class MainViewModel @Inject constructor(
 
             appendDebug("task timeout: ${targetTask.taskType}")
             logEvent("Task timeout: ${targetTask.taskType}")
+            runAi(
+                AiSignal(
+                    type = AiSignalType.TASK_TIMEOUT,
+                    message = "Task timeout",
+                    peerCount = state.peerCount,
+                    meshStatus = state.meshStatus,
+                    trustedPeerLabel = state.trustedPeerLabel,
+                    taskType = targetTask.taskType
+                )
+            )
         }
     }
 
@@ -397,6 +512,15 @@ class MainViewModel @Inject constructor(
         if (latencies.isEmpty()) return null
 
         return latencies.average().toLong()
+    }
+
+
+    private fun runAi(signal: AiSignal) {
+        val decision = aiEngine.evaluate(signal)
+
+        appendDebug("AI: ${decision.summary}")
+        appendDebug("AI action: ${decision.recommendedAction}")
+        logEvent("AI: ${decision.summary}")
     }
 
     fun buildTesterLog(): String {
