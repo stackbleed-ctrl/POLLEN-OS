@@ -50,7 +50,7 @@ data class PollenUiState(
     val lastReconnectedAt: Long? = null,
     val reconnectCount: Int = 0,
 
-    val buildLabel: String = "Alpha 0.4-dev",
+    val buildLabel: String = "Alpha 0.5-dev",
     val protocolLabel: String = "0.2",
 
     val identity: DeviceIdentity? = null,
