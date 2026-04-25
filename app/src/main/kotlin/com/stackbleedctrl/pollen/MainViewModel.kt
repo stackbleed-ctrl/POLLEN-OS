@@ -84,11 +84,7 @@ class MainViewModel @Inject constructor(
         sdk.brain.handlePeerCount { count ->
             appendDebug("peer count: $count")
 
-            val effectiveCount = if (count == 0 && state.lastPeerLabel.isNotBlank()) {
-                1
-            } else {
-                count
-            }
+            val effectiveCount = count
 
             updateConnectionStability(rawCount = count, effectiveCount = effectiveCount)
 
@@ -124,6 +120,7 @@ class MainViewModel @Inject constructor(
             }
         }
 
+        startPeerFreshnessMonitor()
         appendDebug("Waiting for Start brain")
     }
 
@@ -912,6 +909,40 @@ fun brainServiceStarted() {
         }
     }
 
+
+    private fun startPeerFreshnessMonitor() {
+        viewModelScope.launch {
+            while (true) {
+                delay(2_000L)
+
+                val label = state.selectedPeerLabel
+                val lastSeen = state.selectedPeerLastSeenMs
+
+                val nextFreshness = when {
+                    label.isBlank() || lastSeen == null -> "No peer"
+                    System.currentTimeMillis() - lastSeen <= peerFreshMs -> "Fresh"
+                    else -> "Stale"
+                }
+
+                val nextRouteReady = state.peerCount > 0 && nextFreshness == "Fresh"
+
+                if (
+                    state.peerFreshnessLabel != nextFreshness ||
+                    state.taskRouteReady != nextRouteReady
+                ) {
+                    state = state.copy(
+                        peerFreshnessLabel = nextFreshness,
+                        taskRouteReady = nextRouteReady
+                    )
+
+                    if (nextFreshness == "Stale") {
+                        appendDebug("peer target stale: $label")
+                        logEvent("Peer target stale: $label")
+                    }
+                }
+            }
+        }
+    }
 
     private fun formatDuration(ms: Long?): String {
         if (ms == null || ms <= 0L) return "Unknown"
