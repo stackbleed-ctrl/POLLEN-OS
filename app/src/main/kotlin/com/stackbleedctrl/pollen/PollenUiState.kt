@@ -13,6 +13,11 @@ data class PollenUiState(
     val lastPeerLabel: String = "",
     val trustedPeerLabel: String = "",
 
+    val aiSummary: String = "AI waiting for mesh events",
+    val aiRecommendedAction: String = "OBSERVE",
+    val aiConfidence: Float = 0f,
+    val aiHealthScore: Int = 60,
+
     val identity: DeviceIdentity? = null,
     val tasks: List<AlphaTaskState> = emptyList(),
     val eventLog: List<String> = emptyList(),

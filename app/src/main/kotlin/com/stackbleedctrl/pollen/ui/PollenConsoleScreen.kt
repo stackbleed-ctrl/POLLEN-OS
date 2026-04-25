@@ -54,6 +54,10 @@ fun PollenConsoleScreen(
     identity: DeviceIdentity? = null,
     tasks: List<AlphaTaskState> = emptyList(),
     eventLog: List<String> = emptyList(),
+    aiSummary: String = "AI waiting for mesh events",
+    aiRecommendedAction: String = "OBSERVE",
+    aiConfidence: Float = 0f,
+    aiHealthScore: Int = 60,
     fullTestRunning: Boolean = false,
     rangeProbeRunning: Boolean = false,
     rangeProbeSent: Int = 0,
@@ -125,6 +129,18 @@ fun PollenConsoleScreen(
                 InfoLine("Last decision", visibleDecision)
                 InfoLine("Mesh status", visibleStatus)
                 InfoLine("Peer count", peerCount.toString())
+            }
+
+            PremiumPanel {
+                SectionTitle("AI MESH HEALTH")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                InfoLine("Score", "$aiHealthScore/100")
+                InfoLine("Assessment", aiHealthLabel(aiHealthScore))
+                InfoLine("AI summary", aiSummary)
+                InfoLine("Recommended action", aiRecommendedAction)
+                InfoLine("Confidence", "${(aiConfidence * 100).toInt()}%")
             }
 
             Row(
@@ -302,6 +318,15 @@ private fun meshHealthLabel(
         failedCount > 0 -> "Needs review"
         connected -> "Good"
         else -> "Searching"
+    }
+}
+
+private fun aiHealthLabel(score: Int): String {
+    return when {
+        score >= 85 -> "Strong"
+        score >= 70 -> "Stable"
+        score >= 50 -> "Needs observation"
+        else -> "Needs review"
     }
 }
 

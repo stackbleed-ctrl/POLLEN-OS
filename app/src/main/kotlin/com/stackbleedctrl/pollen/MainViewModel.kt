@@ -518,8 +518,24 @@ class MainViewModel @Inject constructor(
     private fun runAi(signal: AiSignal) {
         val decision = aiEngine.evaluate(signal)
 
+        val failedTasks = state.tasks.count { it.status == TaskStatus.FAILED }
+        val pendingTasks = state.tasks.count { it.status == TaskStatus.PENDING }
+        val healthScore = aiEngine.meshHealthScore(
+            peerCount = state.peerCount,
+            failedTasks = failedTasks,
+            pendingTasks = pendingTasks
+        )
+
+        state = state.copy(
+            aiSummary = decision.summary,
+            aiRecommendedAction = decision.recommendedAction.name,
+            aiConfidence = decision.confidence,
+            aiHealthScore = healthScore
+        )
+
         appendDebug("AI: ${decision.summary}")
         appendDebug("AI action: ${decision.recommendedAction}")
+        appendDebug("AI health score: $healthScore")
         logEvent("AI: ${decision.summary}")
     }
 
