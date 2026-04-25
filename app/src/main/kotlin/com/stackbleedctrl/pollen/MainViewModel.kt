@@ -34,6 +34,7 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val taskTimeoutMs = 8_000L
+    private val peerFreshMs = 10_000L
     private val aiEngine = PollenAiEngine()
     private var lastAiPeerCount: Int? = null
 
@@ -76,7 +77,22 @@ class MainViewModel @Inject constructor(
             }
 
             updateConnectionStability(rawCount = count, effectiveCount = effectiveCount)
-            state = state.copy(peerCount = effectiveCount)
+
+            val now = System.currentTimeMillis()
+            val selectedLabel = when {
+                effectiveCount > 0 && state.lastPeerLabel.isNotBlank() -> state.lastPeerLabel
+                effectiveCount > 0 -> "Visible peer"
+                else -> ""
+            }
+
+            state = state.copy(
+                peerCount = effectiveCount,
+                selectedPeerLabel = selectedLabel,
+                selectedPeerLastSeenMs = if (effectiveCount > 0) now else state.selectedPeerLastSeenMs,
+                peerFreshnessLabel = if (effectiveCount > 0) "Fresh" else "No peer",
+                taskRouteReady = effectiveCount > 0
+            )
+
             refreshPeerCapabilityState()
 
             if (lastAiPeerCount != effectiveCount) {
@@ -623,14 +639,41 @@ fun brainServiceStarted() {
 
 
     private fun hasUsablePeerForTask(taskType: AlphaTaskType): Boolean {
-        if (state.peerCount > 0) {
+        val lastSeen = state.selectedPeerLastSeenMs
+        val fresh = lastSeen != null && System.currentTimeMillis() - lastSeen <= peerFreshMs
+
+        if (state.peerCount > 0 && fresh) {
+            state = state.copy(
+                peerFreshnessLabel = "Fresh",
+                taskRouteReady = true
+            )
             return true
         }
 
-        if (state.lastPeerLabel.isNotBlank()) {
+        if (state.peerCount > 0 && !fresh) {
+            state = state.copy(
+                peerFreshnessLabel = "Stale",
+                taskRouteReady = false
+            )
+            appendDebug("blocked task: ${taskType.name} / peer stale")
+            logEvent("Blocked task: ${taskType.name} · peer target stale")
+            return false
+        }
+
+        if (state.lastPeerLabel.isNotBlank() && fresh) {
             appendDebug("peer fallback available for ${taskType.name}: ${state.lastPeerLabel}")
+            state = state.copy(
+                selectedPeerLabel = state.lastPeerLabel,
+                peerFreshnessLabel = "Fresh",
+                taskRouteReady = true
+            )
             return true
         }
+
+        state = state.copy(
+            peerFreshnessLabel = "No peer",
+            taskRouteReady = false
+        )
 
         return false
     }
@@ -1030,6 +1073,9 @@ fun brainServiceStarted() {
             appendLine("MESH")
             appendLine("Status: ${state.meshStatus}")
             appendLine("Peer count: ${state.peerCount}")
+            appendLine("Selected peer: ${state.selectedPeerLabel.ifBlank { "None" }}")
+            appendLine("Peer freshness: ${state.peerFreshnessLabel}")
+            appendLine("Task route ready: ${state.taskRouteReady}")
             appendLine("Last intent: ${state.lastIntent}")
             appendLine("Last decision: ${state.lastDecision}")
             appendLine()

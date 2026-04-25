@@ -13,6 +13,11 @@ data class PollenUiState(
     val lastPeerLabel: String = "",
     val trustedPeerLabel: String = "",
 
+    val selectedPeerLabel: String = "",
+    val selectedPeerLastSeenMs: Long? = null,
+    val peerFreshnessLabel: String = "No peer",
+    val taskRouteReady: Boolean = false,
+
     val aiSummary: String = "AI waiting for mesh events",
     val aiRecommendedAction: String = "OBSERVE",
     val aiConfidence: Float = 0f,
@@ -45,7 +50,7 @@ data class PollenUiState(
     val lastReconnectedAt: Long? = null,
     val reconnectCount: Int = 0,
 
-    val buildLabel: String = "Alpha 0.3-dev",
+    val buildLabel: String = "Alpha 0.4-dev",
     val protocolLabel: String = "0.2",
 
     val identity: DeviceIdentity? = null,
