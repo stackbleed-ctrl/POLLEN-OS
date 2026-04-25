@@ -329,6 +329,24 @@ class MainViewModel @Inject constructor(
             .size
     }
 
+
+    private fun peerSupportsTask(taskType: AlphaTaskType): Boolean {
+        val raw = state.peerSupportedTasks
+        if (raw.isBlank() || raw == "Unknown") return false
+
+        return raw.split(",")
+            .map { it.trim() }
+            .any { it == taskType.name }
+    }
+
+    private fun safeTaskOrEcho(taskType: AlphaTaskType): AlphaTaskType {
+        return if (peerSupportsTask(taskType)) {
+            taskType
+        } else {
+            AlphaTaskType.MESH_ECHO
+        }
+    }
+
     private fun recommendedSafeTask(): String {
         val supported = state.peerSupportedTasks
 
@@ -375,10 +393,10 @@ class MainViewModel @Inject constructor(
             delay(1_700L)
 
             val checks = listOf(
-                AlphaTaskType.PING,
+                safeTaskOrEcho(AlphaTaskType.PING),
                 AlphaTaskType.MESH_ECHO,
-                AlphaTaskType.DEVICE_STATUS,
-                AlphaTaskType.FIELD_NOTE,
+                safeTaskOrEcho(AlphaTaskType.DEVICE_STATUS),
+                safeTaskOrEcho(AlphaTaskType.FIELD_NOTE),
                 recommendedSafeTask().let { safe ->
                     runCatching { AlphaTaskType.valueOf(safe) }.getOrDefault(AlphaTaskType.MESH_ECHO)
                 }
@@ -421,11 +439,11 @@ class MainViewModel @Inject constructor(
         }
 
         val sequence = listOf(
-            AlphaTaskType.PING,
+            safeTaskOrEcho(AlphaTaskType.PING),
             AlphaTaskType.MESH_ECHO,
-            AlphaTaskType.DEVICE_STATUS,
-            diagnosticTask,
-            AlphaTaskType.FIELD_NOTE
+            safeTaskOrEcho(AlphaTaskType.DEVICE_STATUS),
+            safeTaskOrEcho(diagnosticTask),
+            safeTaskOrEcho(AlphaTaskType.FIELD_NOTE)
         )
 
         state = state.copy(
