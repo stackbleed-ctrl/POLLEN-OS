@@ -336,6 +336,65 @@ class MainViewModel @Inject constructor(
         return "Peer=${state.lastPeerLabel.ifBlank { "Unknown" }} · $trust · Tasks=$taskCount · Safe=$safeTask"
     }
 
+
+    fun runAlphaVerification() {
+        if (state.alphaVerifyRunning) {
+            appendDebug("alpha verification already running")
+            logEvent("Alpha verification already running")
+            return
+        }
+
+        state = state.copy(
+            alphaVerifyRunning = true,
+            alphaVerifyStep = 0,
+            alphaVerifyTotal = 6,
+            lastIntent = "Alpha Verification"
+        )
+
+        appendDebug("alpha verification started")
+        logEvent("Alpha verification started")
+
+        viewModelScope.launch {
+            state = state.copy(alphaVerifyStep = 1, lastDecision = "Verify 1/6: compatibility")
+            logEvent("Verify 1/6: compatibility check")
+            runCompatibilityCheck()
+
+            delay(1_700L)
+
+            val checks = listOf(
+                AlphaTaskType.PING,
+                AlphaTaskType.MESH_ECHO,
+                AlphaTaskType.DEVICE_STATUS,
+                AlphaTaskType.FIELD_NOTE,
+                recommendedSafeTask().let { safe ->
+                    runCatching { AlphaTaskType.valueOf(safe) }.getOrDefault(AlphaTaskType.MESH_ECHO)
+                }
+            )
+
+            checks.forEachIndexed { index, taskType ->
+                val step = index + 2
+                state = state.copy(
+                    alphaVerifyStep = step,
+                    lastDecision = "Verify $step/6: ${taskType.name}"
+                )
+
+                logEvent("Verify $step/6: ${taskType.name}")
+                sendAlphaTask(taskType)
+                delay(900L)
+            }
+
+            delay(taskTimeoutMs + 1_000L)
+
+            state = state.copy(
+                alphaVerifyRunning = false,
+                lastDecision = "Alpha verification completed"
+            )
+
+            appendDebug("alpha verification completed")
+            logEvent("Alpha verification completed")
+        }
+    }
+
     fun runDemoSequence() {
         if (state.demoSequenceRunning) {
             appendDebug("demo sequence already running")

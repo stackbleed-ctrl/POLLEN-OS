@@ -67,6 +67,9 @@ fun PollenConsoleScreen(
     demoSequenceTotal: Int = 5,
     peerCapabilitySummary: String = "Peer capability not checked",
     recommendedSafeTask: String = "WAIT_FOR_PEER",
+    alphaVerifyRunning: Boolean = false,
+    alphaVerifyStep: Int = 0,
+    alphaVerifyTotal: Int = 6,
     buildLabel: String = "Alpha 0.3-dev",
     protocolLabel: String = "0.2",
     fullTestRunning: Boolean = false,
@@ -85,7 +88,8 @@ fun PollenConsoleScreen(
     onRunFullMeshTest: () -> Unit = {},
     onRunRangeProbe: () -> Unit = {},
     onRunCompatibilityCheck: () -> Unit = {},
-    onRunDemoSequence: () -> Unit = {}
+    onRunDemoSequence: () -> Unit = {},
+    onRunAlphaVerification: () -> Unit = {}
 ) {
     val visibleIntent = lastIntent.ifBlank { "Mesh Health Check" }
     val visibleDecision = lastDecision.ifBlank { "Waiting" }
@@ -134,6 +138,7 @@ fun PollenConsoleScreen(
                 InfoLine("Average latency", averageLatencyMs?.let { "${it}ms" } ?: "No latency yet")
                 InfoLine("Full test", if (fullTestRunning) "Running" else "Ready")
                 InfoLine("Demo sequence", if (demoSequenceRunning) "$demoSequenceStep/$demoSequenceTotal running" else "Ready")
+                InfoLine("Alpha verify", if (alphaVerifyRunning) "$alphaVerifyStep/$alphaVerifyTotal running" else "Ready")
                 InfoLine("Range probe", if (rangeProbeRunning) "$rangeProbeSent/$rangeProbeTotal running" else "Ready")
             }
 
@@ -243,6 +248,12 @@ fun PollenConsoleScreen(
                 text = if (demoSequenceRunning) "Demo Sequence $demoSequenceStep/$demoSequenceTotal" else "Run Demo Sequence",
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onRunDemoSequence
+            )
+
+            GoldButton(
+                text = if (alphaVerifyRunning) "Alpha Verification $alphaVerifyStep/$alphaVerifyTotal" else "Run Alpha Verification",
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onRunAlphaVerification
             )
 
             GoldButton(
