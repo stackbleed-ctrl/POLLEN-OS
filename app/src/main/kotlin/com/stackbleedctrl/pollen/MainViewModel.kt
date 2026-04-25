@@ -20,6 +20,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -27,6 +28,8 @@ class MainViewModel @Inject constructor(
     private val sdk: PollenSdk,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
+
+    private val taskTimeoutMs = 8_000L
 
     var state by mutableStateOf(
         PollenUiState(
@@ -163,11 +166,47 @@ class MainViewModel @Inject constructor(
 
     fun sendAlphaTask(taskType: AlphaTaskType) {
         val packet = createTaskPacket(taskType)
+        val taskId = packet.taskId
 
         viewModelScope.launch {
             sdk.sendMeshPacket(packet.toJson())
             appendDebug("mesh task packet sent: ${packet.taskType}")
             logEvent("Mesh task sent: ${packet.taskType}")
+        }
+
+        if (taskId != null) {
+            scheduleTaskTimeout(taskId)
+        }
+    }
+
+    private fun scheduleTaskTimeout(taskId: String) {
+        viewModelScope.launch {
+            delay(taskTimeoutMs)
+
+            val targetTask = state.tasks.firstOrNull { it.taskId == taskId }
+            if (targetTask == null || targetTask.status != TaskStatus.PENDING) {
+                return@launch
+            }
+
+            val completedAt = System.currentTimeMillis()
+
+            val updatedTasks = state.tasks.map { task ->
+                if (task.taskId == taskId) {
+                    task.copy(
+                        status = TaskStatus.FAILED,
+                        result = "Timed out waiting for mesh result",
+                        completedAt = completedAt,
+                        latencyMs = completedAt - task.createdAt
+                    )
+                } else {
+                    task
+                }
+            }
+
+            state = state.copy(tasks = updatedTasks)
+
+            appendDebug("task timeout: ${targetTask.taskType}")
+            logEvent("Task timeout: ${targetTask.taskType}")
         }
     }
 
