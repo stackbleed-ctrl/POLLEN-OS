@@ -54,6 +54,7 @@ fun PollenConsoleScreen(
     identity: DeviceIdentity? = null,
     tasks: List<AlphaTaskState> = emptyList(),
     eventLog: List<String> = emptyList(),
+    trustedPeerLabel: String = "",
     aiSummary: String = "AI waiting for mesh events",
     aiRecommendedAction: String = "OBSERVE",
     aiConfidence: Float = 0f,
@@ -106,6 +107,19 @@ fun PollenConsoleScreen(
                 peerCount = peerCount,
                 buildLabel = buildLabel
             )
+
+            PremiumPanel {
+                SectionTitle("SYSTEM BADGES")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                InfoLine("Build", buildLabel)
+                InfoLine("Protocol", protocolLabel)
+                InfoLine("Trust", if (trustedPeerLabel.isNotBlank()) "Trusted peer set" else "Untrusted")
+                InfoLine("Compatibility", compatibilityStatus)
+                InfoLine("Location policy", "Trusted peer only")
+                InfoLine("AI action", aiRecommendedAction)
+            }
 
             PremiumPanel {
                 SectionTitle("MESH TEST SUMMARY")
