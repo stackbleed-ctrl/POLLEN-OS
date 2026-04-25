@@ -62,4 +62,9 @@ class PollenSdk @Inject constructor(
         swarm.meshPing()
         bus.emit(BrainEvent.MeshStatus("Mesh ping sent"))
     }
+
+    suspend fun sendMeshPacket(packetJson: String) {
+        swarm.sendMeshPacket(packetJson)
+        bus.emit(BrainEvent.MeshStatus("Mesh task packet sent"))
+    }
 }

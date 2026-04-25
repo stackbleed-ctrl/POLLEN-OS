@@ -46,7 +46,15 @@ class MainViewModel @Inject constructor(
 
         sdk.brain.handleMeshStatus { status ->
             appendDebug("brain mesh status: $status")
-            state = state.copy(meshStatus = status)
+
+            if (status.startsWith("POLLEN_TASK_RESULT|")) {
+                val rawPacket = status.removePrefix("POLLEN_TASK_RESULT|")
+                MeshPacket.fromJson(rawPacket)?.let { packet ->
+                    onTaskResult(packet)
+                }
+            } else {
+                state = state.copy(meshStatus = status)
+            }
         }
 
         sdk.brain.handlePeerCount { count ->
@@ -148,6 +156,16 @@ class MainViewModel @Inject constructor(
 
         appendDebug("task result: ${packet.taskType} ${packet.payload}")
         logEvent("Task result: ${packet.taskType} → ${packet.payload}")
+    }
+
+    fun sendAlphaTask(taskType: AlphaTaskType) {
+        val packet = createTaskPacket(taskType)
+
+        viewModelScope.launch {
+            sdk.sendMeshPacket(packet.toJson())
+            appendDebug("mesh task packet sent: ${packet.taskType}")
+            logEvent("Mesh task sent: ${packet.taskType}")
+        }
     }
 
     fun simulateLocalTask(taskType: AlphaTaskType) {

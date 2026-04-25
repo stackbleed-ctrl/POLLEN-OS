@@ -14,9 +14,12 @@ import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy
+import com.stackbleedctrl.pollen.mesh.MeshPacket
+import com.stackbleedctrl.pollen.mesh.MeshPacketType
 import com.stackbleedctrl.pollen.oslayer.BrainEvent
 import com.stackbleedctrl.pollen.oslayer.BrainEventBus
 import com.stackbleedctrl.pollen.security.NodeTrustManager
+import com.stackbleedctrl.pollen.tasks.AlphaTaskEngine
 import com.stackbleedctrl.pollen.tracing.PollenTracer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -32,6 +35,7 @@ class NearbyMeshCoordinator @Inject constructor(
     private val client: ConnectionsClient = Nearby.getConnectionsClient(context)
     private val serviceId: String = context.packageName
     private val localName: String = android.os.Build.MODEL ?: "android"
+    private val alphaTaskEngine = AlphaTaskEngine(context)
     private val peers: LinkedHashMap<String, PeerNode> = linkedMapOf()
 
     fun start() {
@@ -228,7 +232,39 @@ class NearbyMeshCoordinator @Inject constructor(
                 }
 
                 MeshMessageType.ROUTE -> {
-                    emitMeshStatus("ROUTE from ${message.fromNodeId}: ${message.payload}")
+                    val packet = MeshPacket.fromJson(message.payload)
+
+                    if (packet == null) {
+                        emitMeshStatus("ROUTE from ${message.fromNodeId}: ${message.payload}")
+                        return
+                    }
+
+                    when (packet.type) {
+                        MeshPacketType.TASK_REQUEST -> {
+                            emitMeshStatus("TASK_REQUEST ${packet.taskType} from ${packet.fromNodeId}")
+
+                            val result = alphaTaskEngine.handleTask(packet)
+
+                            val response = MeshMessage(
+                                type = MeshMessageType.ROUTE,
+                                fromNodeId = result.fromNodeId,
+                                toNodeId = packet.fromNodeId,
+                                payload = result.toJson()
+                            )
+
+                            broadcast(response.encode())
+                            emitMeshStatus("TASK_RESULT sent: ${result.taskType}")
+                        }
+
+                        MeshPacketType.TASK_RESULT -> {
+                            bus.tryEmit(BrainEvent.MeshStatus("POLLEN_TASK_RESULT|${packet.toJson()}"))
+                            emitMeshStatus("TASK_RESULT from ${packet.fromNodeId}: ${packet.payload}")
+                        }
+
+                        else -> {
+                            emitMeshStatus("PACKET ${packet.type} from ${packet.fromNodeId}")
+                        }
+                    }
                 }
             }
         }

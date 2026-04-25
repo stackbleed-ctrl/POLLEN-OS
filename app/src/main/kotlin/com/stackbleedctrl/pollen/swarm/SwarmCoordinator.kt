@@ -36,6 +36,17 @@ class SwarmCoordinator @Inject constructor(
         mesh.broadcast(message.encode())
     }
 
+    fun sendMeshPacket(packetJson: String) {
+        val message = MeshMessage(
+            type = MeshMessageType.ROUTE,
+            fromNodeId = identity.nodeId,
+            payload = packetJson
+        )
+
+        tracer.trace("swarm", "send mesh packet from=${identity.nodeId}")
+        mesh.broadcast(message.encode())
+    }
+
     fun forwardIfPossible(payload: String): Boolean {
         val peer = routes.choosePeer(mesh.peers()) ?: return false
 
