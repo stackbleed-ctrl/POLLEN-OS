@@ -142,11 +142,24 @@ class MainViewModel @Inject constructor(
 
     fun onTaskResult(packet: MeshPacket) {
         val taskId = packet.taskId ?: return
+        val existingTask = state.tasks.firstOrNull { it.taskId == taskId }
+
+        if (existingTask == null) {
+            appendDebug("unknown task result ignored: ${packet.taskType}")
+            logEvent("Unknown task result ignored: ${packet.taskType}")
+            return
+        }
+
+        if (existingTask.status != TaskStatus.PENDING) {
+            appendDebug("duplicate task result ignored: ${packet.taskType}")
+            logEvent("Duplicate result ignored: ${packet.taskType}")
+            return
+        }
+
+        val completedAt = System.currentTimeMillis()
 
         val updatedTasks = state.tasks.map { task ->
             if (task.taskId == taskId) {
-                val completedAt = System.currentTimeMillis()
-
                 task.copy(
                     status = if (packet.success == true) TaskStatus.COMPLETED else TaskStatus.FAILED,
                     result = packet.payload,
