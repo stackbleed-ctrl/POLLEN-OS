@@ -62,6 +62,20 @@ class MainViewModel @Inject constructor(
                 MeshPacket.fromJson(rawPacket)?.let { packet ->
                     onTaskResult(packet)
                 }
+            } else if (status.startsWith("POLLEN_PEER_LABEL|")) {
+                val label = status.removePrefix("POLLEN_PEER_LABEL|").trim()
+                if (label.isNotBlank()) {
+                    val now = System.currentTimeMillis()
+                    state = state.copy(
+                        lastPeerLabel = label,
+                        selectedPeerLabel = label,
+                        selectedPeerLastSeenMs = now,
+                        peerFreshnessLabel = "Fresh",
+                        taskRouteReady = state.peerCount > 0
+                    )
+                    appendDebug("peer label updated: $label")
+                    logEvent("Peer target identified: $label")
+                }
             } else {
                 state = state.copy(meshStatus = status)
             }

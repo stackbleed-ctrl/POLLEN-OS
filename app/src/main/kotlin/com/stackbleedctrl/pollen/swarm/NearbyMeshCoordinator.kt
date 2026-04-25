@@ -165,6 +165,7 @@ class NearbyMeshCoordinator @Inject constructor(
             )
 
             emitMeshStatus("Connection initiated: ${info.endpointName}")
+            emitMeshStatus("POLLEN_PEER_LABEL|${info.endpointName}")
             client.acceptConnection(endpointId, payloads)
         }
 
@@ -209,6 +210,7 @@ class NearbyMeshCoordinator @Inject constructor(
             )
 
             emitMeshStatus("Found node: ${info.endpointName}")
+            emitMeshStatus("POLLEN_PEER_LABEL|${info.endpointName}")
             client.requestConnection(localName, endpointId, lifecycle)
         }
 
