@@ -250,6 +250,17 @@ class MainViewModel @Inject constructor(
 
 
 
+
+    private fun rangeProbeTaskType(): AlphaTaskType {
+        return when (state.compatibilityStatus) {
+            "Modern peer" -> AlphaTaskType.NODE_HEALTH
+            "Compatible peer" -> AlphaTaskType.MESH_ECHO
+            "Legacy echo-only peer" -> AlphaTaskType.MESH_ECHO
+            "Limited / older peer" -> AlphaTaskType.MESH_ECHO
+            else -> AlphaTaskType.MESH_ECHO
+        }
+    }
+
     fun runRangeProbe() {
         if (state.rangeProbeRunning) {
             appendDebug("range probe already running")
