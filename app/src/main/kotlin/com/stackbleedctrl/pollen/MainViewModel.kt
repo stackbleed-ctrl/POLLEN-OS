@@ -305,6 +305,36 @@ class MainViewModel @Inject constructor(
     }
 
 
+
+    private fun supportedTaskCount(): Int {
+        val raw = state.peerSupportedTasks
+        if (raw.isBlank() || raw == "Unknown") return 0
+        return raw.split(",")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .size
+    }
+
+    private fun recommendedSafeTask(): String {
+        val supported = state.peerSupportedTasks
+
+        return when {
+            supported.contains(AlphaTaskType.PING.name) -> AlphaTaskType.PING.name
+            supported.contains(AlphaTaskType.MESH_ECHO.name) -> AlphaTaskType.MESH_ECHO.name
+            state.compatibilityStatus.contains("Legacy", ignoreCase = true) -> AlphaTaskType.MESH_ECHO.name
+            state.peerCount > 0 -> AlphaTaskType.MESH_ECHO.name
+            else -> "WAIT_FOR_PEER"
+        }
+    }
+
+    fun peerCapabilitySummary(): String {
+        val trust = if (state.trustedPeerLabel.isBlank()) "UNTRUSTED" else "TRUSTED"
+        val taskCount = supportedTaskCount()
+        val safeTask = recommendedSafeTask()
+
+        return "Peer=${state.lastPeerLabel.ifBlank { "Unknown" }} · $trust · Tasks=$taskCount · Safe=$safeTask"
+    }
+
     fun runDemoSequence() {
         if (state.demoSequenceRunning) {
             appendDebug("demo sequence already running")
@@ -609,6 +639,14 @@ class MainViewModel @Inject constructor(
     }
 
 
+
+    private fun refreshPeerCapabilityState() {
+        state = state.copy(
+            peerCapabilitySummary = peerCapabilitySummary(),
+            recommendedSafeTask = recommendedSafeTask()
+        )
+    }
+
     private fun updatePeerCompatibility(packet: MeshPacket) {
         when (packet.taskType) {
             AlphaTaskType.PROTOCOL_VERSION.name -> {
@@ -617,6 +655,7 @@ class MainViewModel @Inject constructor(
                     peerProtocolVersion = value,
                     compatibilityStatus = "Protocol detected"
                 )
+                refreshPeerCapabilityState()
                 appendDebug("peer protocol: $value")
                 logEvent("Peer protocol detected: $value")
             }
@@ -639,6 +678,7 @@ class MainViewModel @Inject constructor(
                     compatibilityStatus = status
                 )
 
+                refreshPeerCapabilityState()
                 appendDebug("peer supported tasks: $value")
                 logEvent("Peer compatibility: $status")
             }

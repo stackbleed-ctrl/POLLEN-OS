@@ -64,6 +64,8 @@ fun PollenConsoleScreen(
     demoSequenceRunning: Boolean = false,
     demoSequenceStep: Int = 0,
     demoSequenceTotal: Int = 5,
+    peerCapabilitySummary: String = "Peer capability not checked",
+    recommendedSafeTask: String = "WAIT_FOR_PEER",
     fullTestRunning: Boolean = false,
     rangeProbeRunning: Boolean = false,
     rangeProbeSent: Int = 0,
@@ -158,6 +160,8 @@ fun PollenConsoleScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 InfoLine("Status", compatibilityStatus)
+                InfoLine("Capability", peerCapabilitySummary)
+                InfoLine("Recommended safe task", recommendedSafeTask)
                 InfoLine("Protocol", peerProtocolVersion)
                 InfoLine(
                     "Supported tasks",
