@@ -227,6 +227,7 @@ class MainViewModel @Inject constructor(
         }
 
         state = state.copy(tasks = updatedTasks)
+        updatePeerCompatibility(packet)
 
         val updatedTask = updatedTasks.firstOrNull { it.taskId == taskId }
 
@@ -543,6 +544,54 @@ class MainViewModel @Inject constructor(
         appendDebug("AI action: ${decision.recommendedAction}")
         appendDebug("AI health score: $healthScore")
         logEvent("AI: ${decision.summary}")
+    }
+
+
+    private fun updatePeerCompatibility(packet: MeshPacket) {
+        when (packet.taskType) {
+            AlphaTaskType.PROTOCOL_VERSION.name -> {
+                val value = packet.payload ?: "Unknown"
+                state = state.copy(
+                    peerProtocolVersion = value,
+                    compatibilityStatus = "Protocol detected"
+                )
+                appendDebug("peer protocol: $value")
+                logEvent("Peer protocol detected: $value")
+            }
+
+            AlphaTaskType.SUPPORTED_TASKS.name -> {
+                val value = packet.payload ?: "Unknown"
+                val supportsPing = value.contains(AlphaTaskType.PING.name)
+                val supportsEcho = value.contains(AlphaTaskType.MESH_ECHO.name)
+                val supportsHealth = value.contains(AlphaTaskType.NODE_HEALTH.name)
+
+                val status = when {
+                    supportsPing && supportsEcho && supportsHealth -> "Modern peer"
+                    supportsPing && supportsEcho -> "Compatible peer"
+                    supportsEcho -> "Legacy echo-only peer"
+                    else -> "Limited / older peer"
+                }
+
+                state = state.copy(
+                    peerSupportedTasks = value,
+                    compatibilityStatus = status
+                )
+
+                appendDebug("peer supported tasks: $value")
+                logEvent("Peer compatibility: $status")
+            }
+        }
+    }
+
+    fun runCompatibilityCheck() {
+        appendDebug("compatibility check started")
+        logEvent("Compatibility check started")
+        sendAlphaTask(AlphaTaskType.PROTOCOL_VERSION)
+
+        viewModelScope.launch {
+            delay(750L)
+            sendAlphaTask(AlphaTaskType.SUPPORTED_TASKS)
+        }
     }
 
     fun buildTesterLog(): String {

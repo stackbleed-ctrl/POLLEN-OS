@@ -58,6 +58,9 @@ fun PollenConsoleScreen(
     aiRecommendedAction: String = "OBSERVE",
     aiConfidence: Float = 0f,
     aiHealthScore: Int = 60,
+    peerProtocolVersion: String = "Unknown",
+    peerSupportedTasks: String = "Unknown",
+    compatibilityStatus: String = "Not checked",
     fullTestRunning: Boolean = false,
     rangeProbeRunning: Boolean = false,
     rangeProbeSent: Int = 0,
@@ -72,7 +75,8 @@ fun PollenConsoleScreen(
     onAlphaTask: (AlphaTaskType) -> Unit = {},
     onExportLogs: () -> Unit = {},
     onRunFullMeshTest: () -> Unit = {},
-    onRunRangeProbe: () -> Unit = {}
+    onRunRangeProbe: () -> Unit = {},
+    onRunCompatibilityCheck: () -> Unit = {}
 ) {
     val visibleIntent = lastIntent.ifBlank { "Mesh Health Check" }
     val visibleDecision = lastDecision.ifBlank { "Waiting" }
@@ -141,6 +145,31 @@ fun PollenConsoleScreen(
                 InfoLine("AI summary", aiSummary)
                 InfoLine("Recommended action", aiRecommendedAction)
                 InfoLine("Confidence", "${(aiConfidence * 100).toInt()}%")
+            }
+
+            PremiumPanel {
+                SectionTitle("PEER COMPATIBILITY")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                InfoLine("Status", compatibilityStatus)
+                InfoLine("Protocol", peerProtocolVersion)
+                InfoLine(
+                    "Supported tasks",
+                    if (peerSupportedTasks.length > 120) {
+                        peerSupportedTasks.take(120) + "..."
+                    } else {
+                        peerSupportedTasks
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton(
+                    text = "Check Peer Compatibility",
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onRunCompatibilityCheck
+                )
             }
 
             Row(
