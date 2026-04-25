@@ -10,6 +10,7 @@ import com.stackbleedctrl.pollen.identity.DeviceIdProvider
 import com.stackbleedctrl.pollen.location.LocationSnapshotProvider
 import com.stackbleedctrl.pollen.mesh.MeshPacket
 import com.stackbleedctrl.pollen.mesh.MeshPacketType
+import com.stackbleedctrl.pollen.version.PollenBuildInfo
 
 enum class AlphaTaskType {
     DEVICE_STATUS,
@@ -156,7 +157,7 @@ class AlphaTaskEngine(
                     taskId = taskId,
                     taskType = taskType,
                     success = true,
-                    payload = "POLLEN_PROTOCOL=0.2;TASK_LAYER=1;AI_LAYER=1"
+                    payload = PollenBuildInfo.protocolPayload()
                 )
             }
 

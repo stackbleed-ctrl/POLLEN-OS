@@ -29,6 +29,9 @@ data class PollenUiState(
     val peerCapabilitySummary: String = "Peer capability not checked",
     val recommendedSafeTask: String = "WAIT_FOR_PEER",
 
+    val buildLabel: String = "Alpha 0.3-dev",
+    val protocolLabel: String = "0.2",
+
     val identity: DeviceIdentity? = null,
     val tasks: List<AlphaTaskState> = emptyList(),
     val eventLog: List<String> = emptyList(),

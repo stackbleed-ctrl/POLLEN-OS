@@ -66,6 +66,8 @@ fun PollenConsoleScreen(
     demoSequenceTotal: Int = 5,
     peerCapabilitySummary: String = "Peer capability not checked",
     recommendedSafeTask: String = "WAIT_FOR_PEER",
+    buildLabel: String = "Alpha 0.3-dev",
+    protocolLabel: String = "0.2",
     fullTestRunning: Boolean = false,
     rangeProbeRunning: Boolean = false,
     rangeProbeSent: Int = 0,
@@ -101,7 +103,8 @@ fun PollenConsoleScreen(
         ) {
             Header(
                 connected = connected,
-                peerCount = peerCount
+                peerCount = peerCount,
+                buildLabel = buildLabel
             )
 
             PremiumPanel {
@@ -129,6 +132,8 @@ fun PollenConsoleScreen(
                 InfoLine("Node ID", identity?.nodeId ?: "Creating identity")
                 InfoLine("Model", identity?.modelName ?: "Unknown")
                 InfoLine("Role", identity?.role?.name ?: "WORKER")
+                InfoLine("Build", buildLabel)
+                InfoLine("Protocol", protocolLabel)
             }
 
             PremiumPanel {
@@ -399,7 +404,8 @@ private fun aiHealthLabel(score: Int): String {
 @Composable
 private fun Header(
     connected: Boolean,
-    peerCount: Int
+    peerCount: Int,
+    buildLabel: String
 ) {
     Column {
         Text(
@@ -410,7 +416,7 @@ private fun Header(
         )
 
         Text(
-            text = "ALPHA 0.2 · LIVE MESH TASK LAYER",
+            text = "$buildLabel · LIVE MESH TASK LAYER",
             color = Color(0xFF55514A),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold

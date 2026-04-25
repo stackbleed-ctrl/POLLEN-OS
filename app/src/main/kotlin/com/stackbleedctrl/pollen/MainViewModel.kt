@@ -16,6 +16,7 @@ import com.stackbleedctrl.pollen.sdk.PollenSdk
 import com.stackbleedctrl.pollen.tasks.AlphaTaskState
 import com.stackbleedctrl.pollen.tasks.AlphaTaskType
 import com.stackbleedctrl.pollen.tasks.TaskStatus
+import com.stackbleedctrl.pollen.version.PollenBuildInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.SimpleDateFormat
@@ -603,7 +604,7 @@ class MainViewModel @Inject constructor(
                 AlphaTaskType.LOCAL_TIMESTAMP -> System.currentTimeMillis().toString()
                 AlphaTaskType.MESH_ECHO -> packet.payload ?: "EMPTY_ECHO"
                 AlphaTaskType.PING -> "PONG · local simulation · peers=${state.peerCount}"
-                AlphaTaskType.PROTOCOL_VERSION -> "POLLEN_PROTOCOL=0.2;TASK_LAYER=1;AI_LAYER=1"
+                AlphaTaskType.PROTOCOL_VERSION -> PollenBuildInfo.protocolPayload()
                 AlphaTaskType.SUPPORTED_TASKS -> AlphaTaskType.entries.joinToString(",") { it.name }
                 AlphaTaskType.NODE_HEALTH -> "Node healthy · peers=${state.peerCount} · mesh=${state.meshStatus}"
             },
@@ -743,7 +744,10 @@ class MainViewModel @Inject constructor(
         return buildString {
             appendLine("POLLEN-OS ALPHA TESTER LOG")
             appendLine("================================")
-            appendLine("Version: Alpha 0.3")
+            appendLine("Version: ${PollenBuildInfo.APP_VERSION_LABEL}")
+            appendLine("Protocol: ${PollenBuildInfo.PROTOCOL_VERSION}")
+            appendLine("Task layer: ${PollenBuildInfo.TASK_LAYER_VERSION}")
+            appendLine("AI layer: ${PollenBuildInfo.AI_LAYER_VERSION}")
             appendLine()
             appendLine("DEVICE")
             appendLine("Name: ${identity?.displayName ?: "Unknown"}")
