@@ -61,6 +61,9 @@ fun PollenConsoleScreen(
     peerProtocolVersion: String = "Unknown",
     peerSupportedTasks: String = "Unknown",
     compatibilityStatus: String = "Not checked",
+    demoSequenceRunning: Boolean = false,
+    demoSequenceStep: Int = 0,
+    demoSequenceTotal: Int = 5,
     fullTestRunning: Boolean = false,
     rangeProbeRunning: Boolean = false,
     rangeProbeSent: Int = 0,
@@ -76,7 +79,8 @@ fun PollenConsoleScreen(
     onExportLogs: () -> Unit = {},
     onRunFullMeshTest: () -> Unit = {},
     onRunRangeProbe: () -> Unit = {},
-    onRunCompatibilityCheck: () -> Unit = {}
+    onRunCompatibilityCheck: () -> Unit = {},
+    onRunDemoSequence: () -> Unit = {}
 ) {
     val visibleIntent = lastIntent.ifBlank { "Mesh Health Check" }
     val visibleDecision = lastDecision.ifBlank { "Waiting" }
@@ -110,6 +114,7 @@ fun PollenConsoleScreen(
                 InfoLine("Pending", pendingCount.toString())
                 InfoLine("Average latency", averageLatencyMs?.let { "${it}ms" } ?: "No latency yet")
                 InfoLine("Full test", if (fullTestRunning) "Running" else "Ready")
+                InfoLine("Demo sequence", if (demoSequenceRunning) "$demoSequenceStep/$demoSequenceTotal running" else "Ready")
                 InfoLine("Range probe", if (rangeProbeRunning) "$rangeProbeSent/$rangeProbeTotal running" else "Ready")
             }
 
@@ -199,6 +204,12 @@ fun PollenConsoleScreen(
                 text = if (fullTestRunning) "Full Mesh Test Running" else "Run Full Mesh Test",
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onRunFullMeshTest
+            )
+
+            GoldButton(
+                text = if (demoSequenceRunning) "Demo Sequence $demoSequenceStep/$demoSequenceTotal" else "Run Demo Sequence",
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onRunDemoSequence
             )
 
             GoldButton(

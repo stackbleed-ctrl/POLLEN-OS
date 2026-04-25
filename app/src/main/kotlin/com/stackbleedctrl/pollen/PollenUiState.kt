@@ -22,6 +22,10 @@ data class PollenUiState(
     val peerSupportedTasks: String = "Unknown",
     val compatibilityStatus: String = "Not checked",
 
+    val demoSequenceRunning: Boolean = false,
+    val demoSequenceStep: Int = 0,
+    val demoSequenceTotal: Int = 5,
+
     val identity: DeviceIdentity? = null,
     val tasks: List<AlphaTaskState> = emptyList(),
     val eventLog: List<String> = emptyList(),

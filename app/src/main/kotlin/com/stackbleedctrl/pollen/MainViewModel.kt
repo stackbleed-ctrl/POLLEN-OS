@@ -304,6 +304,57 @@ class MainViewModel @Inject constructor(
         }
     }
 
+
+    fun runDemoSequence() {
+        if (state.demoSequenceRunning) {
+            appendDebug("demo sequence already running")
+            logEvent("Demo sequence already running")
+            return
+        }
+
+        val sequence = listOf(
+            AlphaTaskType.PING,
+            AlphaTaskType.MESH_ECHO,
+            AlphaTaskType.DEVICE_STATUS,
+            AlphaTaskType.NODE_HEALTH,
+            AlphaTaskType.FIELD_NOTE
+        )
+
+        state = state.copy(
+            demoSequenceRunning = true,
+            demoSequenceStep = 0,
+            demoSequenceTotal = sequence.size,
+            lastIntent = "Demo Sequence"
+        )
+
+        appendDebug("demo sequence started")
+        logEvent("Demo sequence started: ${sequence.size} tasks")
+
+        viewModelScope.launch {
+            sequence.forEachIndexed { index, taskType ->
+                state = state.copy(
+                    demoSequenceStep = index + 1,
+                    lastDecision = "Demo step ${index + 1}/${sequence.size}: ${taskType.name}"
+                )
+
+                logEvent("Demo step ${index + 1}/${sequence.size}: ${taskType.name}")
+                sendAlphaTask(taskType)
+
+                delay(900L)
+            }
+
+            delay(taskTimeoutMs + 1_000L)
+
+            state = state.copy(
+                demoSequenceRunning = false,
+                lastDecision = "Demo sequence completed"
+            )
+
+            appendDebug("demo sequence completed")
+            logEvent("Demo sequence completed")
+        }
+    }
+
     fun runFullMeshTest() {
         if (state.fullTestRunning) {
             appendDebug("full mesh test already running")
