@@ -434,6 +434,22 @@ class MainViewModel @Inject constructor(
     }
 
     fun sendAlphaTask(taskType: AlphaTaskType) {
+        if (taskType == AlphaTaskType.LOCATION_SNAPSHOT && state.trustedPeerLabel.isBlank()) {
+            appendDebug("blocked sensitive task: LOCATION_SNAPSHOT requires trusted peer")
+            logEvent("Blocked LOCATION_SNAPSHOT: trust peer first")
+            runAi(
+                AiSignal(
+                    type = AiSignalType.SENSITIVE_TASK_NOTICE,
+                    message = "Blocked LOCATION_SNAPSHOT without trusted peer",
+                    peerCount = state.peerCount,
+                    meshStatus = state.meshStatus,
+                    trustedPeerLabel = state.trustedPeerLabel,
+                    taskType = taskType.name
+                )
+            )
+            return
+        }
+
         logSensitiveTaskNotice(taskType)
 
         val packet = createTaskPacket(taskType)

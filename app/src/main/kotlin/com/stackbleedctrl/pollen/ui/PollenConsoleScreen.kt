@@ -269,7 +269,7 @@ fun PollenConsoleScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                GoldButton("Location Snapshot · Sensitive") {
+                GoldButton("Location Snapshot · Trusted Only") {
                     onAlphaTask(AlphaTaskType.LOCATION_SNAPSHOT)
                 }
 
