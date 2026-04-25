@@ -22,6 +22,8 @@ enum class AlphaTaskType {
     LOCAL_TIMESTAMP,
     MESH_ECHO,
     PING,
+    PROTOCOL_VERSION,
+    SUPPORTED_TASKS,
     NODE_HEALTH
 }
 
@@ -145,6 +147,26 @@ class AlphaTaskEngine(
                     taskType = taskType,
                     success = true,
                     payload = "PONG · node=$nodeId · battery=${batteryPercent()}%"
+                )
+            }
+
+            AlphaTaskType.PROTOCOL_VERSION.name -> {
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = true,
+                    payload = "POLLEN_PROTOCOL=0.2;TASK_LAYER=1;AI_LAYER=1"
+                )
+            }
+
+            AlphaTaskType.SUPPORTED_TASKS.name -> {
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = true,
+                    payload = AlphaTaskType.entries.joinToString(",") { it.name }
                 )
             }
 

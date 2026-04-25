@@ -160,6 +160,8 @@ class MainViewModel @Inject constructor(
             payload = when (taskType) {
                 AlphaTaskType.MESH_ECHO -> "POLLEN mesh echo from ${identity.displayName}"
                 AlphaTaskType.PING -> "PING from ${identity.displayName}"
+                AlphaTaskType.PROTOCOL_VERSION -> "Protocol version request from ${identity.displayName}"
+                AlphaTaskType.SUPPORTED_TASKS -> "Supported tasks request from ${identity.displayName}"
                 AlphaTaskType.FIELD_NOTE -> "Field note from ${identity.displayName}: Alpha test note received over POLLEN mesh."
                 AlphaTaskType.SIMULATED_HELP_SIGNAL -> "SIMULATION ONLY: Help signal test from ${identity.displayName}"
                 else -> null
@@ -315,6 +317,8 @@ class MainViewModel @Inject constructor(
                 AlphaTaskType.FIELD_NOTE,
                 AlphaTaskType.MESH_ECHO,
                 AlphaTaskType.PING,
+                AlphaTaskType.PROTOCOL_VERSION,
+                AlphaTaskType.SUPPORTED_TASKS,
                 AlphaTaskType.NODE_HEALTH,
                 AlphaTaskType.LOCAL_TIMESTAMP
             )
@@ -485,6 +489,8 @@ class MainViewModel @Inject constructor(
                 AlphaTaskType.LOCAL_TIMESTAMP -> System.currentTimeMillis().toString()
                 AlphaTaskType.MESH_ECHO -> packet.payload ?: "EMPTY_ECHO"
                 AlphaTaskType.PING -> "PONG · local simulation · peers=${state.peerCount}"
+                AlphaTaskType.PROTOCOL_VERSION -> "POLLEN_PROTOCOL=0.2;TASK_LAYER=1;AI_LAYER=1"
+                AlphaTaskType.SUPPORTED_TASKS -> AlphaTaskType.entries.joinToString(",") { it.name }
                 AlphaTaskType.NODE_HEALTH -> "Node healthy · peers=${state.peerCount} · mesh=${state.meshStatus}"
             },
             success = true

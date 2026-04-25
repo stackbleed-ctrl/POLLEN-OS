@@ -255,6 +255,18 @@ fun PollenConsoleScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                GoldButton("Protocol Version") {
+                    onAlphaTask(AlphaTaskType.PROTOCOL_VERSION)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Supported Tasks") {
+                    onAlphaTask(AlphaTaskType.SUPPORTED_TASKS)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 GoldButton("Node Health") {
                     onAlphaTask(AlphaTaskType.NODE_HEALTH)
                 }
