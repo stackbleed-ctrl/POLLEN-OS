@@ -67,4 +67,16 @@ class PollenSdk @Inject constructor(
         swarm.sendMeshPacket(packetJson)
         bus.emit(BrainEvent.MeshStatus("Mesh task packet sent"))
     }
+
+    suspend fun sendMeshPacketToBestPeer(packetJson: String): Boolean {
+        val sent = swarm.sendMeshPacketToBestPeer(packetJson)
+
+        if (sent) {
+            bus.emit(BrainEvent.MeshStatus("Targeted mesh task packet sent"))
+        } else {
+            bus.emit(BrainEvent.MeshStatus("No target peer available for mesh task"))
+        }
+
+        return sent
+    }
 }

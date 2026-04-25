@@ -182,9 +182,15 @@ class MainViewModel @Inject constructor(
         val taskId = packet.taskId
 
         viewModelScope.launch {
-            sdk.sendMeshPacket(packet.toJson())
-            appendDebug("mesh task packet sent: ${packet.taskType}")
-            logEvent("Mesh task sent: ${packet.taskType}")
+            val sent = sdk.sendMeshPacketToBestPeer(packet.toJson())
+
+            if (sent) {
+                appendDebug("targeted mesh task sent: ${packet.taskType}")
+                logEvent("Targeted task sent: ${packet.taskType}")
+            } else {
+                appendDebug("targeted mesh task failed: no peer")
+                logEvent("No peer available for task: ${packet.taskType}")
+            }
         }
 
         if (taskId != null) {

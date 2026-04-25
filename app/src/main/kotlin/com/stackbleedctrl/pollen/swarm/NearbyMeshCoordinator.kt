@@ -125,6 +125,19 @@ class NearbyMeshCoordinator @Inject constructor(
         emitMeshStatus("Payload sent to ${connectedPeers.size} peer(s)")
     }
 
+    fun sendToPeer(endpointId: String, text: String): Boolean {
+        val peer = peers[endpointId]
+
+        if (peer?.connected != true) {
+            emitMeshStatus("Target peer unavailable: $endpointId")
+            return false
+        }
+
+        client.sendPayload(endpointId, Payload.fromBytes(text.toByteArray()))
+        emitMeshStatus("Payload sent directly to $endpointId")
+        return true
+    }
+
     private fun connectedPeerCount(): Int =
         peers.values.count { it.connected }
 
