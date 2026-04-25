@@ -135,7 +135,7 @@ fun PollenConsoleScreen(
 
                 InfoLine("Build", buildLabel)
                 InfoLine("Protocol", protocolLabel)
-                InfoLine("Trust", if (trustedPeerLabel.isNotBlank()) "Trusted peer set" else "Untrusted")
+                InfoLine("Trust", trustedPeerLabel.ifBlank { "Untrusted" })
                 InfoLine("Compatibility", compatibilityStatus)
                 InfoLine("Location policy", "Trusted peer only")
                 InfoLine("AI action", aiRecommendedAction)
@@ -218,7 +218,7 @@ fun PollenConsoleScreen(
                 InfoLine("Average latency", averageLatencyMs?.let { "${it}ms" } ?: "No latency yet")
                 InfoLine("AI health", "$aiHealthScore/100")
                 InfoLine("Compatibility", compatibilityStatus)
-                InfoLine("Trust", if (trustedPeerLabel.isNotBlank()) "Trusted" else "Untrusted")
+                InfoLine("Trust", trustedPeerLabel.ifBlank { "Untrusted" })
             }
 
             PremiumPanel {
