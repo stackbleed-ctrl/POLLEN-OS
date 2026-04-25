@@ -48,6 +48,9 @@ class MainActivity : ComponentActivity() {
                 tasks = vm.state.tasks,
                 eventLog = vm.state.eventLog,
                 fullTestRunning = vm.state.fullTestRunning,
+                rangeProbeRunning = vm.state.rangeProbeRunning,
+                rangeProbeSent = vm.state.rangeProbeSent,
+                rangeProbeTotal = vm.state.rangeProbeTotal,
                 averageLatencyMs = vm.averageLatencyMs(),
                 completedCount = vm.completedTaskCount(),
                 failedCount = vm.failedTaskCount(),
@@ -65,7 +68,8 @@ class MainActivity : ComponentActivity() {
                 onMeshPing = vm::meshPing,
                 onAlphaTask = vm::sendAlphaTask,
                 onExportLogs = ::shareTesterLog,
-                onRunFullMeshTest = vm::runFullMeshTest
+                onRunFullMeshTest = vm::runFullMeshTest,
+                onRunRangeProbe = vm::runRangeProbe
             )
         }
     }

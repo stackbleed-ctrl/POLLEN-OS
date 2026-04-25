@@ -16,5 +16,9 @@ data class PollenUiState(
 
     val fullTestRunning: Boolean = false,
     val fullTestStartedAt: Long? = null,
-    val fullTestCompletedAt: Long? = null
+    val fullTestCompletedAt: Long? = null,
+
+    val rangeProbeRunning: Boolean = false,
+    val rangeProbeSent: Int = 0,
+    val rangeProbeTotal: Int = 12
 )

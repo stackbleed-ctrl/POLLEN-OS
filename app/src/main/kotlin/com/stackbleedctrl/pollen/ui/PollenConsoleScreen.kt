@@ -55,6 +55,9 @@ fun PollenConsoleScreen(
     tasks: List<AlphaTaskState> = emptyList(),
     eventLog: List<String> = emptyList(),
     fullTestRunning: Boolean = false,
+    rangeProbeRunning: Boolean = false,
+    rangeProbeSent: Int = 0,
+    rangeProbeTotal: Int = 12,
     averageLatencyMs: Long? = null,
     completedCount: Int = 0,
     failedCount: Int = 0,
@@ -64,7 +67,8 @@ fun PollenConsoleScreen(
     onMeshPing: () -> Unit = {},
     onAlphaTask: (AlphaTaskType) -> Unit = {},
     onExportLogs: () -> Unit = {},
-    onRunFullMeshTest: () -> Unit = {}
+    onRunFullMeshTest: () -> Unit = {},
+    onRunRangeProbe: () -> Unit = {}
 ) {
     val visibleIntent = lastIntent.ifBlank { "Mesh Health Check" }
     val visibleDecision = lastDecision.ifBlank { "Waiting" }
@@ -98,6 +102,7 @@ fun PollenConsoleScreen(
                 InfoLine("Pending", pendingCount.toString())
                 InfoLine("Average latency", averageLatencyMs?.let { "${it}ms" } ?: "No latency yet")
                 InfoLine("Full test", if (fullTestRunning) "Running" else "Ready")
+                InfoLine("Range probe", if (rangeProbeRunning) "$rangeProbeSent/$rangeProbeTotal running" else "Ready")
             }
 
             PremiumPanel {
@@ -149,6 +154,12 @@ fun PollenConsoleScreen(
                 text = if (fullTestRunning) "Full Mesh Test Running" else "Run Full Mesh Test",
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onRunFullMeshTest
+            )
+
+            GoldButton(
+                text = if (rangeProbeRunning) "Range Probe $rangeProbeSent/$rangeProbeTotal" else "Run Range Probe",
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onRunRangeProbe
             )
 
             GoldButton(

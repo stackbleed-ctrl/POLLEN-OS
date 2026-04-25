@@ -178,6 +178,50 @@ class MainViewModel @Inject constructor(
     }
 
 
+
+    fun runRangeProbe() {
+        if (state.rangeProbeRunning) {
+            appendDebug("range probe already running")
+            logEvent("Range probe already running")
+            return
+        }
+
+        val total = state.rangeProbeTotal
+
+        state = state.copy(
+            rangeProbeRunning = true,
+            rangeProbeSent = 0
+        )
+
+        appendDebug("range probe started")
+        logEvent("Range probe started: $total checks")
+
+        viewModelScope.launch {
+            repeat(total) { index ->
+                sendAlphaTask(AlphaTaskType.NODE_HEALTH)
+
+                state = state.copy(
+                    rangeProbeSent = index + 1
+                )
+
+                logEvent("Range probe check ${index + 1}/$total sent")
+
+                if (index < total - 1) {
+                    delay(5_000L)
+                }
+            }
+
+            delay(taskTimeoutMs + 1_000L)
+
+            state = state.copy(
+                rangeProbeRunning = false
+            )
+
+            appendDebug("range probe completed")
+            logEvent("Range probe completed")
+        }
+    }
+
     fun runFullMeshTest() {
         if (state.fullTestRunning) {
             appendDebug("full mesh test already running")
