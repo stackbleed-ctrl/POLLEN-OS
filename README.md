@@ -14,7 +14,7 @@ POLLEN-OS is currently in active alpha development.
 
 ---
 
-## What POLLEN-OS Is
+## What is POLLEN-OS
 
 POLLEN-OS is a mobile mesh coordination layer for Android.
 
