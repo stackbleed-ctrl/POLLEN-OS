@@ -192,16 +192,26 @@ fun PollenConsoleScreen(
                 )
 
                 GoldButton(
-                    text = "Run Test",
+                    text = "Mesh Health",
                     modifier = Modifier.weight(1f),
                     onClick = onRunIntent
                 )
 
                 GoldButton(
-                    text = "Mesh Ping",
+                    text = "Ping Mesh",
                     modifier = Modifier.weight(1f),
                     onClick = onMeshPing
                 )
+            }
+
+            PremiumPanel {
+                SectionTitle("DEMO CONTROLS")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                InfoLine("Recommended flow", "Start Brain → Check Compatibility → Run Demo Sequence")
+                InfoLine("Safe task", recommendedSafeTask)
+                InfoLine("Compatibility", compatibilityStatus)
             }
 
             GoldButton(
