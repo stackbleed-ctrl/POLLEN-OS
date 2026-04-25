@@ -76,6 +76,7 @@ class MainViewModel @Inject constructor(
             }
 
             state = state.copy(peerCount = effectiveCount)
+            refreshPeerCapabilityState()
 
             if (lastAiPeerCount != effectiveCount) {
                 lastAiPeerCount = effectiveCount
