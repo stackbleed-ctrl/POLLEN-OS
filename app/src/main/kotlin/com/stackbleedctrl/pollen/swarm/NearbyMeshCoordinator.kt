@@ -14,6 +14,7 @@ import com.google.android.gms.nearby.connection.Payload
 import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy
+import com.stackbleedctrl.pollen.identity.DeviceIdProvider
 import com.stackbleedctrl.pollen.mesh.MeshPacket
 import com.stackbleedctrl.pollen.mesh.MeshPacketType
 import com.stackbleedctrl.pollen.oslayer.BrainEvent
@@ -34,7 +35,8 @@ class NearbyMeshCoordinator @Inject constructor(
 ) {
     private val client: ConnectionsClient = Nearby.getConnectionsClient(context)
     private val serviceId: String = context.packageName
-    private val localName: String = android.os.Build.MODEL ?: "android"
+    private val localIdentity = DeviceIdProvider.getIdentity(context)
+    private val localName: String = "${localIdentity.displayName} · ${localIdentity.nodeId.takeLast(4)}"
     private val alphaTaskEngine = AlphaTaskEngine(context)
     private val peers: LinkedHashMap<String, PeerNode> = linkedMapOf()
 
@@ -129,17 +131,24 @@ class NearbyMeshCoordinator @Inject constructor(
         val peer = peers[endpointId]
 
         if (peer?.connected != true) {
-            emitMeshStatus("Target peer unavailable: $endpointId")
+            emitMeshStatus("Target peer unavailable: ${peerLabel(endpointId)}")
             return false
         }
 
         client.sendPayload(endpointId, Payload.fromBytes(text.toByteArray()))
-        emitMeshStatus("Payload sent directly to $endpointId")
+        emitMeshStatus("Payload sent directly to ${peerLabel(endpointId)}")
         return true
     }
 
     private fun connectedPeerCount(): Int =
         peers.values.count { it.connected }
+
+    private fun peerLabel(endpointId: String): String {
+        val peerName = peers[endpointId]?.name
+            ?.takeIf { it.isNotBlank() }
+
+        return peerName ?: endpointId
+    }
 
     private fun emitMeshStatus(text: String) {
         tracer.trace("mesh", text)
@@ -172,7 +181,7 @@ class NearbyMeshCoordinator @Inject constructor(
 
             if (connected) {
                 trustManager.notePeer(endpointId)
-                emitMeshStatus("Connected node: $endpointId")
+                emitMeshStatus("Connected node: ${peerLabel(endpointId)}")
             } else {
                 emitMeshStatus("Connection failed: ${result.status.statusCode}")
             }
@@ -187,7 +196,7 @@ class NearbyMeshCoordinator @Inject constructor(
                         connected = false
                     )
 
-            emitMeshStatus("Disconnected node: $endpointId")
+            emitMeshStatus("Disconnected node: ${peerLabel(endpointId)}")
         }
     }
 
@@ -205,7 +214,7 @@ class NearbyMeshCoordinator @Inject constructor(
 
         override fun onEndpointLost(endpointId: String) {
             peers.remove(endpointId)
-            emitMeshStatus("Lost node: $endpointId")
+            emitMeshStatus("Lost node: ${peerLabel(endpointId)}")
         }
     }
 
