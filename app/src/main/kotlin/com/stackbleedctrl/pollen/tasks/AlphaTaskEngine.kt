@@ -7,6 +7,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import com.stackbleedctrl.pollen.identity.DeviceIdProvider
+import com.stackbleedctrl.pollen.location.LocationSnapshotProvider
 import com.stackbleedctrl.pollen.mesh.MeshPacket
 import com.stackbleedctrl.pollen.mesh.MeshPacketType
 
@@ -15,6 +16,7 @@ enum class AlphaTaskType {
     BATTERY_STATUS,
     DEVICE_VITALS,
     BEACON_PEER,
+    LOCATION_SNAPSHOT,
     LOCAL_TIMESTAMP,
     MESH_ECHO,
     NODE_HEALTH
@@ -23,6 +25,8 @@ enum class AlphaTaskType {
 class AlphaTaskEngine(
     private val context: Context
 ) {
+    private val locationProvider = LocationSnapshotProvider(context)
+
 
     fun handleTask(packet: MeshPacket): MeshPacket {
         val nodeId = DeviceIdProvider.getNodeId(context)
@@ -75,6 +79,19 @@ class AlphaTaskEngine(
                     } else {
                         "Beacon unavailable on this device"
                     }
+                )
+            }
+
+            AlphaTaskType.LOCATION_SNAPSHOT.name -> {
+                val snapshot = locationProvider.getLastKnownLocation()
+
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = snapshot != null,
+                    payload = snapshot?.toDisplayString()
+                        ?: "Location unavailable: permission missing or no last known fix"
                 )
             }
 

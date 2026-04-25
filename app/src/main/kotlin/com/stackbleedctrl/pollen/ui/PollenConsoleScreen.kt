@@ -198,6 +198,12 @@ fun PollenConsoleScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                GoldButton("Location Snapshot") {
+                    onAlphaTask(AlphaTaskType.LOCATION_SNAPSHOT)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 GoldButton("Mesh Echo") {
                     onAlphaTask(AlphaTaskType.MESH_ECHO)
                 }

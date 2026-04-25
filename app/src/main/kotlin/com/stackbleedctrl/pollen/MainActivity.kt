@@ -91,6 +91,7 @@ class MainActivity : ComponentActivity() {
         val permissions = mutableListOf<String>()
 
         permissions += Manifest.permission.ACCESS_FINE_LOCATION
+        permissions += Manifest.permission.ACCESS_COARSE_LOCATION
 
         if (Build.VERSION.SDK_INT >= 31) {
             permissions += Manifest.permission.BLUETOOTH_SCAN
