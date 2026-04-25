@@ -75,6 +75,7 @@ class MainViewModel @Inject constructor(
                 count
             }
 
+            updateConnectionStability(rawCount = count, effectiveCount = effectiveCount)
             state = state.copy(peerCount = effectiveCount)
             refreshPeerCapabilityState()
 
@@ -549,7 +550,8 @@ class MainViewModel @Inject constructor(
 
         logSensitiveTaskNotice(taskType)
 
-        val packet = createTaskPacket(taskType)
+        val outboundTaskType = routeTaskTypeForSend(taskType)
+        val packet = createTaskPacket(outboundTaskType)
         val taskId = packet.taskId
 
         viewModelScope.launch {
@@ -807,6 +809,141 @@ class MainViewModel @Inject constructor(
             delay(750L)
             sendAlphaTask(AlphaTaskType.SUPPORTED_TASKS)
         }
+    }
+
+
+    private fun formatDuration(ms: Long?): String {
+        if (ms == null || ms <= 0L) return "Unknown"
+
+        val totalSeconds = ms / 1000L
+        val minutes = totalSeconds / 60L
+        val seconds = totalSeconds % 60L
+
+        return if (minutes > 0) {
+            "${minutes}m ${seconds}s"
+        } else {
+            "${seconds}s"
+        }
+    }
+
+    private fun currentConnectionUptimeMs(): Long? {
+        val startedAt = state.connectionStartedAt ?: return null
+        return System.currentTimeMillis() - startedAt
+    }
+
+    private fun updateConnectionStability(rawCount: Int, effectiveCount: Int) {
+        val now = System.currentTimeMillis()
+        val wasConnected = state.peerCount > 0
+        val isConnected = effectiveCount > 0
+
+        state = when {
+            !wasConnected && isConnected -> {
+                state.copy(
+                    connectionStartedAt = state.connectionStartedAt ?: now,
+                    lastReconnectedAt = now,
+                    reconnectCount = if (state.connectionStartedAt == null) {
+                        state.reconnectCount
+                    } else {
+                        state.reconnectCount + 1
+                    }
+                )
+            }
+
+            wasConnected && rawCount == 0 && state.lastPeerLabel.isBlank() -> {
+                state.copy(
+                    lastDisconnectedAt = now
+                )
+            }
+
+            else -> state
+        }
+    }
+
+    private fun routeTaskTypeForSend(requested: AlphaTaskType): AlphaTaskType {
+        val alwaysAllowed = setOf(
+            AlphaTaskType.MESH_ECHO,
+            AlphaTaskType.PROTOCOL_VERSION,
+            AlphaTaskType.SUPPORTED_TASKS
+        )
+
+        if (requested in alwaysAllowed) return requested
+
+        val knownCapabilities = state.peerSupportedTasks.isNotBlank() && state.peerSupportedTasks != "Unknown"
+
+        if (knownCapabilities && !peerSupportsTask(requested)) {
+            appendDebug("task fallback: ${requested.name} -> MESH_ECHO")
+            logEvent("Fallback task: ${requested.name} unsupported, using MESH_ECHO")
+            return AlphaTaskType.MESH_ECHO
+        }
+
+        if (!knownCapabilities && state.compatibilityStatus == "Not checked") {
+            if (requested == AlphaTaskType.PING || requested == AlphaTaskType.NODE_HEALTH || requested == AlphaTaskType.LOCAL_TIMESTAMP) {
+                appendDebug("task fallback: ${requested.name} -> MESH_ECHO while compatibility unknown")
+                logEvent("Fallback task: ${requested.name} → MESH_ECHO until compatibility is checked")
+                return AlphaTaskType.MESH_ECHO
+            }
+        }
+
+        return requested
+    }
+
+    fun startFieldTest() {
+        if (state.fieldTestRunning) {
+            appendDebug("field test already running")
+            logEvent("Field test already running")
+            return
+        }
+
+        state = state.copy(
+            fieldTestRunning = true,
+            fieldTestStartedAt = System.currentTimeMillis(),
+            fieldTestEndedAt = null,
+            fieldTestCheckCount = 0,
+            fieldTestDistanceLabel = "Start point",
+            fieldTestEnvironment = "Indoor/outdoor",
+            lastIntent = "Field Distance Test"
+        )
+
+        appendDebug("field distance test started")
+        logEvent("Field distance test started")
+    }
+
+    fun markFieldDistanceCheck() {
+        val nextCheck = state.fieldTestCheckCount + 1
+        val label = when (nextCheck) {
+            1 -> "50 ft"
+            2 -> "100 ft"
+            3 -> "250 ft"
+            4 -> "500 ft"
+            5 -> "750 ft"
+            else -> "Extended range"
+        }
+
+        state = state.copy(
+            fieldTestCheckCount = nextCheck,
+            fieldTestDistanceLabel = label
+        )
+
+        appendDebug("field distance check $nextCheck at $label")
+        logEvent("Field distance check $nextCheck: $label · peers=${state.peerCount} · health=${state.aiHealthScore}/100")
+
+        sendAlphaTask(AlphaTaskType.MESH_ECHO)
+    }
+
+    fun endFieldTest() {
+        if (!state.fieldTestRunning) {
+            appendDebug("field test not running")
+            logEvent("Field test not running")
+            return
+        }
+
+        state = state.copy(
+            fieldTestRunning = false,
+            fieldTestEndedAt = System.currentTimeMillis()
+        )
+
+        appendDebug("field distance test ended")
+        logEvent("Field distance test ended after ${state.fieldTestCheckCount} checks")
     }
 
     fun buildTesterLog(): String {

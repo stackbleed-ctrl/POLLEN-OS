@@ -33,6 +33,18 @@ data class PollenUiState(
     val alphaVerifyStep: Int = 0,
     val alphaVerifyTotal: Int = 6,
 
+    val fieldTestRunning: Boolean = false,
+    val fieldTestStartedAt: Long? = null,
+    val fieldTestEndedAt: Long? = null,
+    val fieldTestCheckCount: Int = 0,
+    val fieldTestDistanceLabel: String = "Unmarked",
+    val fieldTestEnvironment: String = "Indoor/outdoor",
+
+    val connectionStartedAt: Long? = null,
+    val lastDisconnectedAt: Long? = null,
+    val lastReconnectedAt: Long? = null,
+    val reconnectCount: Int = 0,
+
     val buildLabel: String = "Alpha 0.3-dev",
     val protocolLabel: String = "0.2",
 

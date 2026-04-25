@@ -70,6 +70,14 @@ fun PollenConsoleScreen(
     alphaVerifyRunning: Boolean = false,
     alphaVerifyStep: Int = 0,
     alphaVerifyTotal: Int = 6,
+    fieldTestRunning: Boolean = false,
+    fieldTestCheckCount: Int = 0,
+    fieldTestDistanceLabel: String = "Unmarked",
+    fieldTestEnvironment: String = "Indoor/outdoor",
+    connectionStartedAt: Long? = null,
+    lastDisconnectedAt: Long? = null,
+    lastReconnectedAt: Long? = null,
+    reconnectCount: Int = 0,
     buildLabel: String = "Alpha 0.3-dev",
     protocolLabel: String = "0.2",
     fullTestRunning: Boolean = false,
@@ -89,7 +97,10 @@ fun PollenConsoleScreen(
     onRunRangeProbe: () -> Unit = {},
     onRunCompatibilityCheck: () -> Unit = {},
     onRunDemoSequence: () -> Unit = {},
-    onRunAlphaVerification: () -> Unit = {}
+    onRunAlphaVerification: () -> Unit = {},
+    onStartFieldTest: () -> Unit = {},
+    onMarkFieldDistanceCheck: () -> Unit = {},
+    onEndFieldTest: () -> Unit = {}
 ) {
     val visibleIntent = lastIntent.ifBlank { "Mesh Health Check" }
     val visibleDecision = lastDecision.ifBlank { "Waiting" }
@@ -139,7 +150,70 @@ fun PollenConsoleScreen(
                 InfoLine("Full test", if (fullTestRunning) "Running" else "Ready")
                 InfoLine("Demo sequence", if (demoSequenceRunning) "$demoSequenceStep/$demoSequenceTotal running" else "Ready")
                 InfoLine("Alpha verify", if (alphaVerifyRunning) "$alphaVerifyStep/$alphaVerifyTotal running" else "Ready")
+                InfoLine("Field test", if (fieldTestRunning) "Running · $fieldTestDistanceLabel" else "Ready")
                 InfoLine("Range probe", if (rangeProbeRunning) "$rangeProbeSent/$rangeProbeTotal running" else "Ready")
+            }
+
+            PremiumPanel {
+                SectionTitle("FIELD DISTANCE TEST")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                InfoLine("Status", if (fieldTestRunning) "Running" else "Ready")
+                InfoLine("Checks", fieldTestCheckCount.toString())
+                InfoLine("Distance", fieldTestDistanceLabel)
+                InfoLine("Environment", fieldTestEnvironment)
+                InfoLine("Peer count", peerCount.toString())
+                InfoLine("AI health", "$aiHealthScore/100")
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton(
+                    text = if (fieldTestRunning) "Field Test Running" else "Start Field Test",
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onStartFieldTest
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton(
+                    text = "Mark Distance Check",
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onMarkFieldDistanceCheck
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton(
+                    text = "End Field Test",
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onEndFieldTest
+                )
+            }
+
+            PremiumPanel {
+                SectionTitle("CONNECTION STABILITY")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                InfoLine("Uptime", displayDurationFrom(connectionStartedAt))
+                InfoLine("Reconnects", reconnectCount.toString())
+                InfoLine("Last drop", displayTimestamp(lastDisconnectedAt))
+                InfoLine("Last reconnect", displayTimestamp(lastReconnectedAt))
+            }
+
+            PremiumPanel {
+                SectionTitle("TESTER REPORT")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                InfoLine("Build", buildLabel)
+                InfoLine("Peer", if (peerCount > 0) "Visible" else "Not visible")
+                InfoLine("Tasks", "Completed $completedCount · Failed $failedCount · Pending $pendingCount")
+                InfoLine("Average latency", averageLatencyMs?.let { "${it}ms" } ?: "No latency yet")
+                InfoLine("AI health", "$aiHealthScore/100")
+                InfoLine("Compatibility", compatibilityStatus)
+                InfoLine("Trust", if (trustedPeerLabel.isNotBlank()) "Trusted" else "Untrusted")
             }
 
             PremiumPanel {
@@ -424,6 +498,25 @@ private fun aiHealthLabel(score: Int): String {
         score >= 50 -> "Needs observation"
         else -> "Needs review"
     }
+}
+
+private fun displayDurationFrom(startedAt: Long?): String {
+    if (startedAt == null) return "Unknown"
+
+    val elapsedMs = System.currentTimeMillis() - startedAt
+    val totalSeconds = elapsedMs / 1000L
+    val minutes = totalSeconds / 60L
+    val seconds = totalSeconds % 60L
+
+    return if (minutes > 0) {
+        "${minutes}m ${seconds}s"
+    } else {
+        "${seconds}s"
+    }
+}
+
+private fun displayTimestamp(value: Long?): String {
+    return value?.toString() ?: "None"
 }
 
 @Composable
