@@ -562,6 +562,24 @@ fun brainServiceStarted() {
 
         logSensitiveTaskNotice(taskType)
 
+        if (!hasUsablePeerForTask(taskType)) {
+            appendDebug("blocked task: ${taskType.name} / no usable peer")
+            logEvent("Blocked task: ${taskType.name} · waiting for peer")
+
+            runAi(
+                AiSignal(
+                    type = AiSignalType.ERROR,
+                    message = "No usable peer for task: ${taskType.name}",
+                    peerCount = state.peerCount,
+                    meshStatus = state.meshStatus,
+                    trustedPeerLabel = state.trustedPeerLabel,
+                    taskType = taskType.name
+                )
+            )
+
+            return
+        }
+
         val outboundTaskType = routeTaskTypeForSend(taskType)
         val packet = createTaskPacket(outboundTaskType)
         val taskId = packet.taskId
@@ -601,6 +619,20 @@ fun brainServiceStarted() {
         if (taskId != null) {
             scheduleTaskTimeout(taskId)
         }
+    }
+
+
+    private fun hasUsablePeerForTask(taskType: AlphaTaskType): Boolean {
+        if (state.peerCount > 0) {
+            return true
+        }
+
+        if (state.lastPeerLabel.isNotBlank()) {
+            appendDebug("peer fallback available for ${taskType.name}: ${state.lastPeerLabel}")
+            return true
+        }
+
+        return false
     }
 
     private fun logSensitiveTaskNotice(taskType: AlphaTaskType) {
@@ -891,7 +923,7 @@ fun brainServiceStarted() {
         if (!knownCapabilities && state.compatibilityStatus == "Not checked") {
             if (requested == AlphaTaskType.PING || requested == AlphaTaskType.NODE_HEALTH || requested == AlphaTaskType.LOCAL_TIMESTAMP) {
                 appendDebug("task fallback: ${requested.name} -> MESH_ECHO while compatibility unknown")
-                logEvent("Fallback task: ${requested.name} → MESH_ECHO until compatibility is checked")
+                logEvent("Compatibility unknown: using safe MESH_ECHO instead of ${requested.name}")
                 return AlphaTaskType.MESH_ECHO
             }
         }
