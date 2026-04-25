@@ -898,6 +898,54 @@ fun brainServiceStarted() {
         }
     }
 
+    fun trustSelectedPeer() {
+        val label = state.selectedPeerLabel.ifBlank { state.lastPeerLabel }
+
+        if (label.isBlank()) {
+            appendDebug("trust peer blocked: no selected peer")
+            logEvent("Trust blocked: no selected peer")
+            return
+        }
+
+        state = state.copy(
+            trustedPeerLabel = label
+        )
+
+        appendDebug("trusted peer set: $label")
+        logEvent("Trusted peer set: $label")
+
+        runAi(
+            AiSignal(
+                type = AiSignalType.TRUST_CHANGED,
+                message = "Trusted peer set",
+                peerCount = state.peerCount,
+                meshStatus = state.meshStatus,
+                trustedPeerLabel = state.trustedPeerLabel
+            )
+        )
+    }
+
+    fun clearTrustedPeer() {
+        val oldLabel = state.trustedPeerLabel
+
+        state = state.copy(
+            trustedPeerLabel = ""
+        )
+
+        appendDebug("trusted peer cleared: ${oldLabel.ifBlank { "none" }}")
+        logEvent("Trusted peer cleared")
+
+        runAi(
+            AiSignal(
+                type = AiSignalType.TRUST_CHANGED,
+                message = "Trusted peer cleared",
+                peerCount = state.peerCount,
+                meshStatus = state.meshStatus,
+                trustedPeerLabel = state.trustedPeerLabel
+            )
+        )
+    }
+
     fun runCompatibilityCheck() {
         appendDebug("compatibility check started")
         logEvent("Compatibility check started")
@@ -1119,6 +1167,7 @@ fun brainServiceStarted() {
             appendLine("Status: ${state.meshStatus}")
             appendLine("Peer count: ${state.peerCount}")
             appendLine("Selected peer: ${state.selectedPeerLabel.ifBlank { "None" }}")
+            appendLine("Trusted peer: ${state.trustedPeerLabel.ifBlank { "None" }}")
             appendLine("Peer freshness: ${state.peerFreshnessLabel}")
             appendLine("Task route ready: ${state.taskRouteReady}")
             appendLine("Last intent: ${state.lastIntent}")
