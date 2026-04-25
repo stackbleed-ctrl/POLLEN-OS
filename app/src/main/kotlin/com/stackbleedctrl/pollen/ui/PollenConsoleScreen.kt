@@ -57,7 +57,8 @@ fun PollenConsoleScreen(
     onStartBrain: () -> Unit = {},
     onRunIntent: () -> Unit = {},
     onMeshPing: () -> Unit = {},
-    onAlphaTask: (AlphaTaskType) -> Unit = {}
+    onAlphaTask: (AlphaTaskType) -> Unit = {},
+    onExportLogs: () -> Unit = {}
 ) {
     val visibleIntent = lastIntent.ifBlank { "Mesh Health Check" }
     val visibleDecision = lastDecision.ifBlank { "Waiting" }
@@ -123,6 +124,12 @@ fun PollenConsoleScreen(
                     onClick = onMeshPing
                 )
             }
+
+            GoldButton(
+                text = "Export Tester Log",
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onExportLogs
+            )
 
             PremiumPanel {
                 SectionTitle("MESH NETWORK")

@@ -250,6 +250,58 @@ class MainViewModel @Inject constructor(
         onTaskResult(simulatedResult)
     }
 
+
+    fun buildTesterLog(): String {
+        val identity = state.identity
+
+        val taskLines = if (state.tasks.isEmpty()) {
+            listOf("No tasks recorded")
+        } else {
+            state.tasks.take(20).map { task ->
+                "- ${task.taskType} | ${task.status} | latency=${task.latencyMs ?: "-"}ms | result=${task.result ?: "-"}"
+            }
+        }
+
+        val eventLines = if (state.eventLog.isEmpty()) {
+            listOf("No events recorded")
+        } else {
+            state.eventLog.take(30)
+        }
+
+        val debugLines = if (state.debugLines.isEmpty()) {
+            listOf("No debug lines recorded")
+        } else {
+            state.debugLines.takeLast(30)
+        }
+
+        return buildString {
+            appendLine("POLLEN-OS ALPHA TESTER LOG")
+            appendLine("================================")
+            appendLine("Version: Alpha 0.3")
+            appendLine()
+            appendLine("DEVICE")
+            appendLine("Name: ${identity?.displayName ?: "Unknown"}")
+            appendLine("Node ID: ${identity?.nodeId ?: "Unknown"}")
+            appendLine("Model: ${identity?.modelName ?: "Unknown"}")
+            appendLine("Role: ${identity?.role?.name ?: "Unknown"}")
+            appendLine()
+            appendLine("MESH")
+            appendLine("Status: ${state.meshStatus}")
+            appendLine("Peer count: ${state.peerCount}")
+            appendLine("Last intent: ${state.lastIntent}")
+            appendLine("Last decision: ${state.lastDecision}")
+            appendLine()
+            appendLine("TASKS")
+            taskLines.forEach { appendLine(it) }
+            appendLine()
+            appendLine("EVENT FEED")
+            eventLines.forEach { appendLine(it) }
+            appendLine()
+            appendLine("DEBUG LOG")
+            debugLines.forEach { appendLine(it) }
+        }
+    }
+
     fun logEvent(message: String) {
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         val updated = listOf("[$timestamp] $message") + state.eventLog

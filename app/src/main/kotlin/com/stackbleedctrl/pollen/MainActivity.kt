@@ -63,6 +63,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun shareTesterLog() {
+        val logText = vm.buildTesterLog()
+
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "POLLEN-OS Alpha Tester Log")
+            putExtra(Intent.EXTRA_TEXT, logText)
+        }
+
+        startActivity(
+            Intent.createChooser(
+                sendIntent,
+                "Export POLLEN-OS Tester Log"
+            )
+        )
+    }
+
     private fun requestPollenPermissions() {
         val permissions = mutableListOf<String>()
 
