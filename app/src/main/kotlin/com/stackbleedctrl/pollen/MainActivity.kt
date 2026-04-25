@@ -32,10 +32,12 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+    super.onCreate(savedInstanceState)
+    enableEdgeToEdge()
 
-        requestPollenPermissions()
+    vm.dashboardInitialized()
+
+    requestPollenPermissions()
 
         setContent {
             val uiState = vm.state
@@ -72,12 +74,13 @@ class MainActivity : ComponentActivity() {
                 failedCount = failedCount,
                 pendingCount = pendingCount,
                 onStartBrain = {
-                    vm.startBrain()
-                    ContextCompat.startForegroundService(
-                        this,
-                        Intent(this, PollenBrainService::class.java)
-                    )
-                },
+    vm.startBrain()
+    ContextCompat.startForegroundService(
+        this,
+        Intent(this, PollenBrainService::class.java)
+    )
+    vm.brainServiceStarted()
+},
                 onRunIntent = {
                     vm.submitIntent("Mesh Health Check")
                 },

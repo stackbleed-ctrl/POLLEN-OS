@@ -121,7 +121,19 @@ class MainViewModel @Inject constructor(
             )
         )
     }
+fun dashboardInitialized() {
+    state = state.copy(
+        eventLog = listOf("Alpha 0.3 dashboard initialized") + state.eventLog,
+        debugLines = listOf("dashboard initialized") + state.debugLines
+    )
+}
 
+fun brainServiceStarted() {
+    state = state.copy(
+        eventLog = listOf("Brain foreground service started") + state.eventLog,
+        debugLines = listOf("foreground service start requested") + state.debugLines
+    )
+}
     fun permissionsReady() {
         appendDebug("permissions ready")
         logEvent("Permissions ready")
