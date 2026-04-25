@@ -47,6 +47,11 @@ class MainActivity : ComponentActivity() {
                 identity = vm.state.identity,
                 tasks = vm.state.tasks,
                 eventLog = vm.state.eventLog,
+                fullTestRunning = vm.state.fullTestRunning,
+                averageLatencyMs = vm.averageLatencyMs(),
+                completedCount = vm.completedTaskCount(),
+                failedCount = vm.failedTaskCount(),
+                pendingCount = vm.pendingTaskCount(),
                 onStartBrain = {
                     vm.startBrain()
                     ContextCompat.startForegroundService(
@@ -58,7 +63,9 @@ class MainActivity : ComponentActivity() {
                     vm.submitIntent("Mesh Health Check")
                 },
                 onMeshPing = vm::meshPing,
-                onAlphaTask = vm::simulateLocalTask
+                onAlphaTask = vm::sendAlphaTask,
+                onExportLogs = ::shareTesterLog,
+                onRunFullMeshTest = vm::runFullMeshTest
             )
         }
     }

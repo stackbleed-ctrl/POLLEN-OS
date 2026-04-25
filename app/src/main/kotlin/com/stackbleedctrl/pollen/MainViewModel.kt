@@ -177,6 +177,49 @@ class MainViewModel @Inject constructor(
         logEvent("Task result: ${packet.taskType} → ${packet.payload}")
     }
 
+
+    fun runFullMeshTest() {
+        if (state.fullTestRunning) {
+            appendDebug("full mesh test already running")
+            logEvent("Full mesh test already running")
+            return
+        }
+
+        state = state.copy(
+            fullTestRunning = true,
+            fullTestStartedAt = System.currentTimeMillis(),
+            fullTestCompletedAt = null
+        )
+
+        appendDebug("full mesh test started")
+        logEvent("Full mesh test started")
+
+        viewModelScope.launch {
+            val tests = listOf(
+                AlphaTaskType.DEVICE_STATUS,
+                AlphaTaskType.BATTERY_STATUS,
+                AlphaTaskType.MESH_ECHO,
+                AlphaTaskType.NODE_HEALTH,
+                AlphaTaskType.LOCAL_TIMESTAMP
+            )
+
+            tests.forEach { taskType ->
+                sendAlphaTask(taskType)
+                delay(750L)
+            }
+
+            delay(taskTimeoutMs + 1_000L)
+
+            state = state.copy(
+                fullTestRunning = false,
+                fullTestCompletedAt = System.currentTimeMillis()
+            )
+
+            appendDebug("full mesh test completed")
+            logEvent("Full mesh test completed")
+        }
+    }
+
     fun sendAlphaTask(taskType: AlphaTaskType) {
         val packet = createTaskPacket(taskType)
         val taskId = packet.taskId
@@ -250,6 +293,26 @@ class MainViewModel @Inject constructor(
         onTaskResult(simulatedResult)
     }
 
+
+
+    fun completedTaskCount(): Int =
+        state.tasks.count { it.status == TaskStatus.COMPLETED }
+
+    fun failedTaskCount(): Int =
+        state.tasks.count { it.status == TaskStatus.FAILED }
+
+    fun pendingTaskCount(): Int =
+        state.tasks.count { it.status == TaskStatus.PENDING }
+
+    fun averageLatencyMs(): Long? {
+        val latencies = state.tasks
+            .mapNotNull { it.latencyMs }
+            .filter { it >= 0L }
+
+        if (latencies.isEmpty()) return null
+
+        return latencies.average().toLong()
+    }
 
     fun buildTesterLog(): String {
         val identity = state.identity

@@ -54,11 +54,17 @@ fun PollenConsoleScreen(
     identity: DeviceIdentity? = null,
     tasks: List<AlphaTaskState> = emptyList(),
     eventLog: List<String> = emptyList(),
+    fullTestRunning: Boolean = false,
+    averageLatencyMs: Long? = null,
+    completedCount: Int = 0,
+    failedCount: Int = 0,
+    pendingCount: Int = 0,
     onStartBrain: () -> Unit = {},
     onRunIntent: () -> Unit = {},
     onMeshPing: () -> Unit = {},
     onAlphaTask: (AlphaTaskType) -> Unit = {},
-    onExportLogs: () -> Unit = {}
+    onExportLogs: () -> Unit = {},
+    onRunFullMeshTest: () -> Unit = {}
 ) {
     val visibleIntent = lastIntent.ifBlank { "Mesh Health Check" }
     val visibleDecision = lastDecision.ifBlank { "Waiting" }
@@ -79,6 +85,20 @@ fun PollenConsoleScreen(
                 connected = connected,
                 peerCount = peerCount
             )
+
+            PremiumPanel {
+                SectionTitle("MESH TEST SUMMARY")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                InfoLine("Health", meshHealthLabel(connected, failedCount, pendingCount))
+                InfoLine("Peers", peerCount.toString())
+                InfoLine("Completed", completedCount.toString())
+                InfoLine("Failed", failedCount.toString())
+                InfoLine("Pending", pendingCount.toString())
+                InfoLine("Average latency", averageLatencyMs?.let { "${it}ms" } ?: "No latency yet")
+                InfoLine("Full test", if (fullTestRunning) "Running" else "Ready")
+            }
 
             PremiumPanel {
                 SectionTitle("DEVICE IDENTITY")
@@ -124,6 +144,12 @@ fun PollenConsoleScreen(
                     onClick = onMeshPing
                 )
             }
+
+            GoldButton(
+                text = if (fullTestRunning) "Full Mesh Test Running" else "Run Full Mesh Test",
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onRunFullMeshTest
+            )
 
             GoldButton(
                 text = "Export Tester Log",
@@ -216,6 +242,19 @@ fun PollenConsoleScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
         }
+    }
+}
+
+private fun meshHealthLabel(
+    connected: Boolean,
+    failedCount: Int,
+    pendingCount: Int
+): String {
+    return when {
+        pendingCount > 0 -> "Testing"
+        failedCount > 0 -> "Needs review"
+        connected -> "Good"
+        else -> "Searching"
     }
 }
 

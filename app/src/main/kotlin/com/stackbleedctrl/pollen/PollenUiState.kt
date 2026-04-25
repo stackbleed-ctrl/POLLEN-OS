@@ -12,5 +12,9 @@ data class PollenUiState(
 
     val identity: DeviceIdentity? = null,
     val tasks: List<AlphaTaskState> = emptyList(),
-    val eventLog: List<String> = emptyList()
+    val eventLog: List<String> = emptyList(),
+
+    val fullTestRunning: Boolean = false,
+    val fullTestStartedAt: Long? = null,
+    val fullTestCompletedAt: Long? = null
 )
