@@ -142,10 +142,13 @@ class MainViewModel @Inject constructor(
 
         val updatedTasks = state.tasks.map { task ->
             if (task.taskId == taskId) {
+                val completedAt = System.currentTimeMillis()
+
                 task.copy(
                     status = if (packet.success == true) TaskStatus.COMPLETED else TaskStatus.FAILED,
                     result = packet.payload,
-                    completedAt = System.currentTimeMillis()
+                    completedAt = completedAt,
+                    latencyMs = completedAt - task.createdAt
                 )
             } else {
                 task

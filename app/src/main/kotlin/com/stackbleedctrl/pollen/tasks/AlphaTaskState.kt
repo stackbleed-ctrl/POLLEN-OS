@@ -7,7 +7,8 @@ data class AlphaTaskState(
     val status: TaskStatus,
     val result: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
-    val completedAt: Long? = null
+    val completedAt: Long? = null,
+    val latencyMs: Long? = null
 )
 
 enum class TaskStatus {

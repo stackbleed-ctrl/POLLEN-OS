@@ -338,6 +338,15 @@ private fun TaskLine(task: AlphaTaskState) {
             fontWeight = FontWeight.SemiBold
         )
 
+        task.latencyMs?.let { latency ->
+            Text(
+                text = "Latency: ${latency}ms",
+                color = GoldSoft,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
         task.result?.let { result ->
             Text(
                 text = "Result: $result",
