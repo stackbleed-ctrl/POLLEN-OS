@@ -198,6 +198,7 @@ class MainViewModel @Inject constructor(
             val tests = listOf(
                 AlphaTaskType.DEVICE_STATUS,
                 AlphaTaskType.BATTERY_STATUS,
+                AlphaTaskType.DEVICE_VITALS,
                 AlphaTaskType.MESH_ECHO,
                 AlphaTaskType.NODE_HEALTH,
                 AlphaTaskType.LOCAL_TIMESTAMP
@@ -283,6 +284,8 @@ class MainViewModel @Inject constructor(
             payload = when (taskType) {
                 AlphaTaskType.DEVICE_STATUS -> "ONLINE"
                 AlphaTaskType.BATTERY_STATUS -> "Battery check ready for mesh wiring"
+                AlphaTaskType.DEVICE_VITALS -> "Device vitals ready for mesh wiring"
+                AlphaTaskType.BEACON_PEER -> "Beacon simulation complete"
                 AlphaTaskType.LOCAL_TIMESTAMP -> System.currentTimeMillis().toString()
                 AlphaTaskType.MESH_ECHO -> packet.payload ?: "EMPTY_ECHO"
                 AlphaTaskType.NODE_HEALTH -> "Node healthy · peers=${state.peerCount} · mesh=${state.meshStatus}"

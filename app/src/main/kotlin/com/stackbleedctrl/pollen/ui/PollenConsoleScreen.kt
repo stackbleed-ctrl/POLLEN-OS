@@ -186,6 +186,18 @@ fun PollenConsoleScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                GoldButton("Device Vitals") {
+                    onAlphaTask(AlphaTaskType.DEVICE_VITALS)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Beacon Peer") {
+                    onAlphaTask(AlphaTaskType.BEACON_PEER)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 GoldButton("Mesh Echo") {
                     onAlphaTask(AlphaTaskType.MESH_ECHO)
                 }

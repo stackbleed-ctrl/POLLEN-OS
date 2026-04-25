@@ -2,6 +2,10 @@ package com.stackbleedctrl.pollen.tasks
 
 import android.content.Context
 import android.os.BatteryManager
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import com.stackbleedctrl.pollen.identity.DeviceIdProvider
 import com.stackbleedctrl.pollen.mesh.MeshPacket
 import com.stackbleedctrl.pollen.mesh.MeshPacketType
@@ -9,6 +13,8 @@ import com.stackbleedctrl.pollen.mesh.MeshPacketType
 enum class AlphaTaskType {
     DEVICE_STATUS,
     BATTERY_STATUS,
+    DEVICE_VITALS,
+    BEACON_PEER,
     LOCAL_TIMESTAMP,
     MESH_ECHO,
     NODE_HEALTH
@@ -41,6 +47,34 @@ class AlphaTaskEngine(
                     taskType = taskType,
                     success = true,
                     payload = "Battery ${batteryPercent()}%"
+                )
+            }
+
+            AlphaTaskType.DEVICE_VITALS.name -> {
+                val identity = DeviceIdProvider.getIdentity(context)
+
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = true,
+                    payload = "Device=${identity.displayName}, Model=${identity.modelName}, Android=${Build.VERSION.RELEASE}, SDK=${Build.VERSION.SDK_INT}, Battery=${batteryPercent()}%, Charging=${isCharging()}"
+                )
+            }
+
+            AlphaTaskType.BEACON_PEER.name -> {
+                val beaconed = runBeacon()
+
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = beaconed,
+                    payload = if (beaconed) {
+                        "Beacon activated: vibration signal sent"
+                    } else {
+                        "Beacon unavailable on this device"
+                    }
                 )
             }
 
@@ -108,5 +142,40 @@ class AlphaTaskEngine(
     private fun batteryPercent(): Int {
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+    }
+
+    private fun isCharging(): Boolean {
+        val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        return batteryManager.isCharging
+    }
+
+    private fun runBeacon(): Boolean {
+        return try {
+            val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                manager.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            }
+
+            if (vibrator == null || !vibrator.hasVibrator()) {
+                false
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val pattern = longArrayOf(0, 180, 120, 180, 120, 420)
+                    vibrator.vibrate(
+                        VibrationEffect.createWaveform(pattern, -1)
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(longArrayOf(0, 180, 120, 180, 120, 420), -1)
+                }
+
+                true
+            }
+        } catch (_: Exception) {
+            false
+        }
     }
 }
