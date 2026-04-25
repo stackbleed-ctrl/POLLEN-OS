@@ -910,6 +910,12 @@ fun brainServiceStarted() {
             return
         }
 
+        if (!state.taskRouteReady || state.peerFreshnessLabel != "Fresh") {
+            appendDebug("trust peer blocked: route not ready for $label")
+            logEvent("Trust blocked: $label is not fresh/route-ready")
+            return
+        }
+
         state = state.copy(
             trustedPeerLabel = label
         )
