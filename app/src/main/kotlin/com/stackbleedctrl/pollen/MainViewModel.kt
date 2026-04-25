@@ -342,11 +342,16 @@ class MainViewModel @Inject constructor(
             return
         }
 
+        val diagnosticTask = when (state.compatibilityStatus) {
+            "Modern peer" -> AlphaTaskType.NODE_HEALTH
+            else -> AlphaTaskType.MESH_ECHO
+        }
+
         val sequence = listOf(
             AlphaTaskType.PING,
             AlphaTaskType.MESH_ECHO,
             AlphaTaskType.DEVICE_STATUS,
-            AlphaTaskType.NODE_HEALTH,
+            diagnosticTask,
             AlphaTaskType.FIELD_NOTE
         )
 
@@ -357,8 +362,8 @@ class MainViewModel @Inject constructor(
             lastIntent = "Demo Sequence"
         )
 
-        appendDebug("demo sequence started")
-        logEvent("Demo sequence started: ${sequence.size} tasks")
+        appendDebug("demo sequence started with compatibility=${state.compatibilityStatus}")
+        logEvent("Demo sequence started: ${sequence.size} tasks · diagnostic=${diagnosticTask.name}")
 
         viewModelScope.launch {
             sequence.forEachIndexed { index, taskType ->
