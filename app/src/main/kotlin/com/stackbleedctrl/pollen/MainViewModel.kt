@@ -35,6 +35,7 @@ class MainViewModel @Inject constructor(
 
     private val taskTimeoutMs = 8_000L
     private val aiEngine = PollenAiEngine()
+    private var lastAiPeerCount: Int? = null
 
     var state by mutableStateOf(
         PollenUiState(
@@ -67,16 +68,28 @@ class MainViewModel @Inject constructor(
 
         sdk.brain.handlePeerCount { count ->
             appendDebug("peer count: $count")
-            state = state.copy(peerCount = count)
-            runAi(
-                AiSignal(
-                    type = AiSignalType.PEER_COUNT_CHANGED,
-                    message = "Peer count changed",
-                    peerCount = count,
-                    meshStatus = state.meshStatus,
-                    trustedPeerLabel = state.trustedPeerLabel
+
+            val effectiveCount = if (count == 0 && state.lastPeerLabel.isNotBlank()) {
+                1
+            } else {
+                count
+            }
+
+            state = state.copy(peerCount = effectiveCount)
+
+            if (lastAiPeerCount != effectiveCount) {
+                lastAiPeerCount = effectiveCount
+
+                runAi(
+                    AiSignal(
+                        type = AiSignalType.PEER_COUNT_CHANGED,
+                        message = "Peer count changed",
+                        peerCount = effectiveCount,
+                        meshStatus = state.meshStatus,
+                        trustedPeerLabel = state.trustedPeerLabel
+                    )
                 )
-            )
+            }
         }
 
         appendDebug("Waiting for Start brain")
