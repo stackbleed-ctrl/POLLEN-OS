@@ -47,6 +47,9 @@ import com.stackbleedctrl.pollen.ui.PollenColors.TextPrimary
 fun PollenConsoleScreen(
     connected: Boolean = false,
     peerCount: Int = 0,
+    selectedPeerLabel: String = "",
+    peerFreshnessLabel: String = "No peer",
+    taskRouteReady: Boolean = false,
     lastIntent: String = "Mesh Health Check",
     lastDecision: String = "Waiting",
     meshStatus: String = "Idle",

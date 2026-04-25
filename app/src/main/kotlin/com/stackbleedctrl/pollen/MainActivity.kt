@@ -54,6 +54,9 @@ class MainActivity : ComponentActivity() {
             PollenConsoleScreen(
                 connected = uiState.peerCount > 0,
                 peerCount = uiState.peerCount,
+                selectedPeerLabel = uiState.selectedPeerLabel,
+                peerFreshnessLabel = uiState.peerFreshnessLabel,
+                taskRouteReady = uiState.taskRouteReady,
                 lastIntent = uiState.lastIntent.ifBlank { "Mesh Health Check" },
                 lastDecision = uiState.lastDecision,
                 meshStatus = uiState.meshStatus,
