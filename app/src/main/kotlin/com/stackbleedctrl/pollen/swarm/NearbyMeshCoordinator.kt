@@ -323,8 +323,14 @@ class NearbyMeshCoordinator @Inject constructor(
 
                     val packetSender = decryptedPacket.senderLabel ?: decryptedPacket.fromNodeId
 
+                    val encryptionState = when {
+                        packet.usesPeerKey() -> "peer-key"
+                        packet.isEncrypted() -> "alpha-fallback"
+                        else -> "none"
+                    }
+
                     emitMeshStatus(
-                        "Packet security: ${decryptedPacket.taskType ?: decryptedPacket.type.name} from $packetSender · age=${packetAgeMs}ms · integrity=$integrityState"
+                        "Packet security: ${decryptedPacket.taskType ?: decryptedPacket.type.name} from $packetSender · age=${packetAgeMs}ms · integrity=$integrityState · encryption=$encryptionState"
                     )
 
                     if (!decryptedPacket.integrityValid()) {
