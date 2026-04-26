@@ -759,6 +759,56 @@ fun brainServiceStarted() {
         }
     }
 
+    private fun sendCoordinateDenialResult(
+        requester: String,
+        requestTaskId: String
+    ) {
+        if (requestTaskId.isBlank() || requestTaskId == "unknown") {
+            appendDebug("coordinate denial result blocked: missing original task id")
+            logEvent("Coordinate denial result blocked: missing original task id")
+            return
+        }
+
+        val peerKeyMaterial = outboundPeerKeyMaterial()
+
+        if (peerKeyMaterial.isNullOrBlank()) {
+            appendDebug("coordinate denial result blocked: peer-key unavailable")
+            logEvent("Coordinate denial result blocked: peer-key unavailable")
+            return
+        }
+
+        val identity = state.identity ?: DeviceIdProvider.getIdentity(appContext)
+        val localLabel = "${identity.displayName} · ${identity.nodeId.takeLast(4)}"
+
+        val denialResult = MeshPacket(
+            type = MeshPacketType.TASK_RESULT,
+            fromNodeId = identity.nodeId,
+            taskId = requestTaskId,
+            taskType = AlphaTaskType.REQUEST_COORDINATES.name,
+            senderLabel = localLabel,
+            payload = "COORDINATE_REQUEST_DENIED · $localLabel declined to share coordinates with $requester",
+            success = false
+        ).encryptPayload(peerKeyMaterial)
+
+        if (!denialResult.usesPeerKey()) {
+            appendDebug("coordinate denial result blocked: result was not peer-key encrypted")
+            logEvent("Coordinate denial result blocked: result was not peer-key encrypted")
+            return
+        }
+
+        viewModelScope.launch {
+            val sent = sdk.sendMeshPacketToBestPeer(denialResult.toJson())
+
+            if (sent) {
+                appendDebug("coordinate denial result sent for request=$requestTaskId")
+                logEvent("Coordinate denial sent: request=$requestTaskId")
+            } else {
+                appendDebug("coordinate denial result failed: no peer route")
+                logEvent("Coordinate denial failed: no peer route")
+            }
+        }
+    }
+
     fun shareCoordinatesForPendingRequest() {
         val requester = state.pendingCoordinateRequestLabel
 
@@ -783,11 +833,15 @@ fun brainServiceStarted() {
 
     fun denyPendingCoordinateRequest() {
         val requester = state.pendingCoordinateRequestLabel.ifBlank { "unknown requester" }
+        val requestTaskId = state.pendingCoordinateRequestTaskId
 
         appendDebug("coordinate request denied: $requester")
         logEvent("Coordinate request denied: $requester")
 
-        sendAlphaTask(AlphaTaskType.COORDINATE_REQUEST_DENIED)
+        sendCoordinateDenialResult(
+            requester = requester,
+            requestTaskId = requestTaskId
+        )
 
         state = state.copy(
             pendingCoordinateRequestLabel = "",
