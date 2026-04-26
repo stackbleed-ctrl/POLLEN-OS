@@ -236,7 +236,9 @@ fun brainServiceStarted() {
     }
 
     private fun requiresPeerKeyOnly(taskType: AlphaTaskType): Boolean {
-        return taskType == AlphaTaskType.LOCATION_SNAPSHOT
+        return taskType == AlphaTaskType.LOCATION_SNAPSHOT ||
+            taskType == AlphaTaskType.REQUEST_COORDINATES ||
+            taskType == AlphaTaskType.SHARE_COORDINATES
     }
 
     private fun hasPeerKeyReadyForSensitiveTask(): Boolean {
@@ -272,6 +274,13 @@ fun brainServiceStarted() {
                 AlphaTaskType.SUPPORTED_TASKS -> "Supported tasks request from ${identity.displayName}"
                 AlphaTaskType.FIELD_NOTE -> "Field note from ${identity.displayName}: Alpha test note received over POLLEN mesh."
                 AlphaTaskType.SIMULATED_HELP_SIGNAL -> "SIMULATION ONLY: Help signal test from ${identity.displayName}"
+                AlphaTaskType.MISSION_STATUS -> "Mission status request from ${identity.displayName}"
+                AlphaTaskType.NODE_CHECKIN -> "Node check-in request from ${identity.displayName}"
+                AlphaTaskType.REQUEST_COORDINATES -> "Coordinate request from trusted peer ${identity.displayName}"
+                AlphaTaskType.SHARE_COORDINATES -> "Coordinate share request from ${identity.displayName}"
+                AlphaTaskType.FIELD_REPORT -> "Field report from ${identity.displayName}: Alpha 1.0 mission packet."
+                AlphaTaskType.RESOURCE_STATUS -> "Resource status request from ${identity.displayName}"
+                AlphaTaskType.EVAC_MARKER -> "Evac marker test from ${identity.displayName}"
                 else -> null
             }
         )
@@ -966,6 +975,13 @@ fun brainServiceStarted() {
                 AlphaTaskType.PROTOCOL_VERSION -> PollenBuildInfo.protocolPayload()
                 AlphaTaskType.SUPPORTED_TASKS -> AlphaTaskType.entries.joinToString(",") { it.name }
                 AlphaTaskType.NODE_HEALTH -> "Node healthy · peers=${state.peerCount} · mesh=${state.meshStatus}"
+                AlphaTaskType.MISSION_STATUS -> "MISSION_READY · local simulation · infrastructure=not required"
+                AlphaTaskType.NODE_CHECKIN -> "CHECKIN_OK · local simulation · peers=${state.peerCount}"
+                AlphaTaskType.REQUEST_COORDINATES -> "Coordinate request simulation complete"
+                AlphaTaskType.SHARE_COORDINATES -> "Coordinate share simulation complete"
+                AlphaTaskType.FIELD_REPORT -> "FIELD_REPORT_ACK · local simulation"
+                AlphaTaskType.RESOURCE_STATUS -> "RESOURCE_STATUS · local simulation · battery/status ready"
+                AlphaTaskType.EVAC_MARKER -> "EVAC_MARKER_ACK · local simulation"
             },
             success = true
         )

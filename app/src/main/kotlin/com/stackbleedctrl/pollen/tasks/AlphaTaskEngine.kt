@@ -25,7 +25,14 @@ enum class AlphaTaskType {
     PING,
     PROTOCOL_VERSION,
     SUPPORTED_TASKS,
-    NODE_HEALTH
+    NODE_HEALTH,
+    MISSION_STATUS,
+    NODE_CHECKIN,
+    REQUEST_COORDINATES,
+    SHARE_COORDINATES,
+    FIELD_REPORT,
+    RESOURCE_STATUS,
+    EVAC_MARKER
 }
 
 class AlphaTaskEngine(
@@ -180,6 +187,88 @@ class AlphaTaskEngine(
                     taskType = taskType,
                     success = true,
                     payload = "Node=${identity.displayName}, Role=${identity.role}, Battery=${batteryPercent()}%"
+                )
+            }
+
+            AlphaTaskType.MISSION_STATUS.name -> {
+                val identity = DeviceIdProvider.getIdentity(context)
+
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = true,
+                    payload = "MISSION_READY · Node=${identity.displayName} · Battery=${batteryPercent()}% · Infrastructure=not required"
+                )
+            }
+
+            AlphaTaskType.NODE_CHECKIN.name -> {
+                val identity = DeviceIdProvider.getIdentity(context)
+
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = true,
+                    payload = "CHECKIN_OK · Node=${identity.displayName} · Battery=${batteryPercent()}% · Time=${System.currentTimeMillis()}"
+                )
+            }
+
+            AlphaTaskType.REQUEST_COORDINATES.name -> {
+                val snapshot = locationProvider.getLastKnownLocation()
+
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = snapshot != null,
+                    payload = snapshot?.toDisplayString()
+                        ?: "Coordinates unavailable: permission missing or no last known fix"
+                )
+            }
+
+            AlphaTaskType.SHARE_COORDINATES.name -> {
+                val snapshot = locationProvider.getLastKnownLocation()
+
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = snapshot != null,
+                    payload = snapshot?.toDisplayString()
+                        ?: "Coordinates unavailable: permission missing or no last known fix"
+                )
+            }
+
+            AlphaTaskType.FIELD_REPORT.name -> {
+                val identity = DeviceIdProvider.getIdentity(context)
+
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = true,
+                    payload = "FIELD_REPORT_ACK · Node=${identity.displayName} · ${packet.payload ?: "No report payload"}"
+                )
+            }
+
+            AlphaTaskType.RESOURCE_STATUS.name -> {
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = true,
+                    payload = "RESOURCE_STATUS · Battery=${batteryPercent()}% · Comms=mesh-ready · Supplies=unknown"
+                )
+            }
+
+            AlphaTaskType.EVAC_MARKER.name -> {
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = true,
+                    payload = "EVAC_MARKER_ACK · Marker received at ${System.currentTimeMillis()}"
                 )
             }
 

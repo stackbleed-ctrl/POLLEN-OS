@@ -406,6 +406,36 @@ fun PollenConsoleScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                GoldButton("Mission Status") {
+                    onAlphaTask(AlphaTaskType.MISSION_STATUS)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Node Check-In") {
+                    onAlphaTask(AlphaTaskType.NODE_CHECKIN)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Request Peer Coordinates") {
+                    onAlphaTask(AlphaTaskType.REQUEST_COORDINATES)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Resource Status") {
+                    onAlphaTask(AlphaTaskType.RESOURCE_STATUS)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton("Evac Marker") {
+                    onAlphaTask(AlphaTaskType.EVAC_MARKER)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 GoldButton("Send Field Note") {
                     onAlphaTask(AlphaTaskType.FIELD_NOTE)
                 }
