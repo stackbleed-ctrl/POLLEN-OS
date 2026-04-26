@@ -306,8 +306,8 @@ fun brainServiceStarted() {
                 AlphaTaskType.SIMULATED_HELP_SIGNAL -> "SIMULATION ONLY: Help signal test from ${identity.displayName}"
                 AlphaTaskType.MISSION_STATUS -> "Mission status request from ${identity.displayName}"
                 AlphaTaskType.NODE_CHECKIN -> "Node check-in request from ${identity.displayName}"
-                AlphaTaskType.REQUEST_COORDINATES -> "Coordinate request from trusted peer ${identity.displayName}"
-                AlphaTaskType.SHARE_COORDINATES -> "Coordinate share request from ${identity.displayName}"
+                AlphaTaskType.REQUEST_COORDINATES -> "Coordinate request from trusted peer ${identity.displayName}. Approval required on receiving node."
+                AlphaTaskType.SHARE_COORDINATES -> "Explicit coordinate share from ${identity.displayName}"
                 AlphaTaskType.FIELD_REPORT -> "Field report from ${identity.displayName}: Alpha 1.0 mission packet."
                 AlphaTaskType.RESOURCE_STATUS -> "Resource status request from ${identity.displayName}"
                 AlphaTaskType.EVAC_MARKER -> "Evac marker test from ${identity.displayName}"
@@ -377,13 +377,16 @@ fun brainServiceStarted() {
             return
         }
 
-        if (existingTask.taskType == AlphaTaskType.LOCATION_SNAPSHOT.name) {
+        if (existingTask.taskType == AlphaTaskType.LOCATION_SNAPSHOT.name ||
+            existingTask.taskType == AlphaTaskType.REQUEST_COORDINATES.name ||
+            existingTask.taskType == AlphaTaskType.SHARE_COORDINATES.name
+        ) {
             val expectedPeerLabel = existingTask.targetPeerLabel
             val resultSenderLabel = packet.senderLabel
 
             if (expectedPeerLabel.isNullOrBlank()) {
-                appendDebug("sensitive result rejected: LOCATION_SNAPSHOT missing expected peer binding")
-                logEvent("Sensitive result rejected: LOCATION_SNAPSHOT · missing expected peer binding")
+                appendDebug("sensitive result rejected: ${existingTask.taskType} missing expected peer binding")
+                logEvent("Sensitive result rejected: ${existingTask.taskType} · missing expected peer binding")
                 runAi(
                     AiSignal(
                         type = AiSignalType.ERROR,
@@ -398,8 +401,8 @@ fun brainServiceStarted() {
             }
 
             if (resultSenderLabel.isNullOrBlank()) {
-                appendDebug("sensitive result rejected: LOCATION_SNAPSHOT missing sender label")
-                logEvent("Sensitive result rejected: LOCATION_SNAPSHOT · missing sender label")
+                appendDebug("sensitive result rejected: ${existingTask.taskType} missing sender label")
+                logEvent("Sensitive result rejected: ${existingTask.taskType} · missing sender label")
                 runAi(
                     AiSignal(
                         type = AiSignalType.ERROR,
@@ -414,8 +417,8 @@ fun brainServiceStarted() {
             }
 
             if (resultSenderLabel != expectedPeerLabel) {
-                appendDebug("sensitive result rejected: LOCATION_SNAPSHOT sender mismatch expected=$expectedPeerLabel got=$resultSenderLabel")
-                logEvent("Sensitive result rejected: LOCATION_SNAPSHOT · sender mismatch")
+                appendDebug("sensitive result rejected: ${existingTask.taskType} sender mismatch expected=$expectedPeerLabel got=$resultSenderLabel")
+                logEvent("Sensitive result rejected: ${existingTask.taskType} · sender mismatch")
                 runAi(
                     AiSignal(
                         type = AiSignalType.ERROR,
@@ -429,8 +432,8 @@ fun brainServiceStarted() {
                 return
             }
 
-            appendDebug("sensitive result route-bound: LOCATION_SNAPSHOT from $resultSenderLabel")
-            logEvent("Sensitive result route-bound: LOCATION_SNAPSHOT · $resultSenderLabel")
+            appendDebug("sensitive result route-bound: ${existingTask.taskType} from $resultSenderLabel")
+            logEvent("Sensitive result route-bound: ${existingTask.taskType} · $resultSenderLabel")
         }
 
         val completedAt = System.currentTimeMillis()

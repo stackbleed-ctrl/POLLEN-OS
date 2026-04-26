@@ -441,6 +441,12 @@ fun PollenConsoleScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                GoldButton("Share My Coordinates · Explicit") {
+                    onAlphaTask(AlphaTaskType.SHARE_COORDINATES)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 GoldButton("Resource Status") {
                     onAlphaTask(AlphaTaskType.RESOURCE_STATUS)
                 }

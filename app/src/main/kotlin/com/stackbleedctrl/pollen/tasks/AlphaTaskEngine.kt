@@ -215,15 +215,14 @@ class AlphaTaskEngine(
             }
 
             AlphaTaskType.REQUEST_COORDINATES.name -> {
-                val snapshot = locationProvider.getLastKnownLocation()
+                val identity = DeviceIdProvider.getIdentity(context)
 
                 result(
                     nodeId = nodeId,
                     taskId = taskId,
                     taskType = taskType,
-                    success = snapshot != null,
-                    payload = snapshot?.toDisplayString()
-                        ?: "Coordinates unavailable: permission missing or no last known fix"
+                    success = true,
+                    payload = "COORDINATE_REQUEST_RECEIVED · Node=${identity.displayName} · Approval required: use SHARE_COORDINATES to respond"
                 )
             }
 
