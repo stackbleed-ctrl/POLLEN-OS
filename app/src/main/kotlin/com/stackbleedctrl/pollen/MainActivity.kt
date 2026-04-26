@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
                 missionReadinessScore = uiState.missionReadinessScore,
                 missionReadinessLabel = uiState.missionReadinessLabel,
                 missionReadinessBreakdown = uiState.missionReadinessBreakdown,
+                missionRecommendedAction = uiState.missionRecommendedAction,
                 pendingCoordinateRequestLabel = uiState.pendingCoordinateRequestLabel,
                 pendingCoordinateRequestTaskId = uiState.pendingCoordinateRequestTaskId,
                 pendingCoordinateRequestAt = uiState.pendingCoordinateRequestAt,

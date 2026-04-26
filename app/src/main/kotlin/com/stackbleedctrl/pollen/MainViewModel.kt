@@ -296,13 +296,23 @@ fun brainServiceStarted() {
             "Key=${if (hasPeerKey) "yes" else "no"} · " +
             "Nav=${if (hasNavigationFix) "yes" else "no"}"
 
+        val recommendedAction = when {
+            !hasPeer -> "Start brain and scan for peers"
+            !hasFreshRoute -> "Move closer or wait for fresh route"
+            !hasTrust -> "Trust selected peer"
+            !hasPeerKey -> "Re-trust peer to activate peer-key mode"
+            !hasNavigationFix -> "Request peer coordinates"
+            else -> "Mission ready"
+        }
+
         state = state.copy(
             missionModeLabel = missionMode,
             infrastructureLabel = "Not required",
             missionSummary = summary,
             missionReadinessScore = score,
             missionReadinessLabel = missionReadinessLabel(score),
-            missionReadinessBreakdown = breakdown
+            missionReadinessBreakdown = breakdown,
+            missionRecommendedAction = recommendedAction
         )
     }
 
@@ -1830,6 +1840,7 @@ Infrastructure: ${state.infrastructureLabel}
 Mission summary: ${state.missionSummary}
 Mission readiness: ${state.missionReadinessScore}/100 · ${state.missionReadinessLabel}
 Readiness breakdown: ${state.missionReadinessBreakdown}
+Recommended action: ${state.missionRecommendedAction}
 Trusted peer: ${state.trustedPeerLabel.ifBlank { "Untrusted" }}
 Selected peer: ${state.selectedPeerLabel.ifBlank { "None" }}
 Peer freshness: ${state.peerFreshnessLabel}

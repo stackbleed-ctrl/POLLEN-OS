@@ -58,6 +58,7 @@ fun PollenConsoleScreen(
     missionReadinessScore: Int = 25,
     missionReadinessLabel: String = "Offline ready",
     missionReadinessBreakdown: String = "Peer=no · Route=no · Trust=no · Key=no · Nav=no",
+    missionRecommendedAction: String = "Start brain and scan for peers",
     pendingCoordinateRequestLabel: String = "",
     pendingCoordinateRequestTaskId: String = "",
     pendingCoordinateRequestAt: Long? = null,
@@ -179,6 +180,7 @@ fun PollenConsoleScreen(
                 InfoLine("Mission readiness", "$missionReadinessScore/100")
                 InfoLine("Readiness", missionReadinessLabel)
                 InfoLine("Breakdown", missionReadinessBreakdown)
+                InfoLine("Recommended action", missionRecommendedAction)
                 InfoLine("Infrastructure", infrastructureLabel)
                 InfoLine("Mission summary", missionSummary)
                 InfoLine("Route", if (taskRouteReady) "Fresh route ready" else "Waiting for route")

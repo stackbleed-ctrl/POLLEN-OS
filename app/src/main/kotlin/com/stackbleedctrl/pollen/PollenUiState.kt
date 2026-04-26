@@ -26,6 +26,7 @@ data class PollenUiState(
     val missionReadinessScore: Int = 25,
     val missionReadinessLabel: String = "Offline ready",
     val missionReadinessBreakdown: String = "Peer=no · Route=no · Trust=no · Key=no · Nav=no",
+    val missionRecommendedAction: String = "Start brain and scan for peers",
 
     val pendingCoordinateRequestLabel: String = "",
     val pendingCoordinateRequestTaskId: String = "",
