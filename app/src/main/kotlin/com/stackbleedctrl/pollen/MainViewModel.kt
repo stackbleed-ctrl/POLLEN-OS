@@ -101,6 +101,7 @@ class MainViewModel @Inject constructor(
                         pendingCoordinateRequestAt = System.currentTimeMillis(),
                         missionSummary = "Coordinate request pending approval"
                     )
+                    refreshMissionState()
 
                     appendDebug("coordinate request pending from: $requester")
                     logEvent("Coordinate request pending approval: $requester")
@@ -273,8 +274,10 @@ fun brainServiceStarted() {
         val hasTrust = state.trustedPeerLabel.isNotBlank()
         val hasPeerKey = state.encryptionModeLabel == "Peer-to-peer"
         val hasNavigationFix = hasFreshNavigationFix()
+        val hasPendingCoordinateConsent = state.pendingCoordinateRequestLabel.isNotBlank()
 
         val missionMode = when {
+            hasPendingCoordinateConsent -> "CONSENT_REQUIRED"
             hasTrust && hasFreshRoute && hasPeerKey -> "MISSION_ACTIVE"
             hasTrust -> "TRUSTED"
             hasFreshRoute -> "CONNECTED"
@@ -292,12 +295,19 @@ fun brainServiceStarted() {
             ).coerceIn(0, 100)
 
         val summary = when {
+            hasPendingCoordinateConsent -> "Coordinate request pending approval"
             hasNavigationFix -> state.lastPeerCoordinateNavigationSummary
             missionMode == "MISSION_ACTIVE" -> "Trusted encrypted mesh active"
             missionMode == "TRUSTED" -> "Peer trusted, waiting for fresh route"
             missionMode == "CONNECTED" -> "Fresh peer route available"
             missionMode == "SCANNING" -> "Peer detected, establishing route"
             else -> "Ready without tower/cloud infrastructure"
+        }
+
+        val missionAlert = if (hasPendingCoordinateConsent) {
+            "Coordinate request pending from ${state.pendingCoordinateRequestLabel}"
+        } else {
+            "None"
         }
 
         val breakdown = "Peer=${if (hasPeer) "yes" else "no"} · " +
@@ -309,6 +319,7 @@ fun brainServiceStarted() {
         val hasAnyNavigationFix = state.lastPeerCoordinateLabel != "None"
 
         val recommendedAction = when {
+            hasPendingCoordinateConsent -> "Approve or deny coordinate request"
             !hasPeer -> "Start brain and scan for peers"
             !hasFreshRoute -> "Move closer or wait for fresh route"
             !hasTrust -> "Trust selected peer"
@@ -322,6 +333,7 @@ fun brainServiceStarted() {
             missionModeLabel = missionMode,
             infrastructureLabel = "Not required",
             missionSummary = summary,
+            missionAlertLabel = missionAlert,
             missionReadinessScore = score,
             missionReadinessLabel = missionReadinessLabel(score),
             missionReadinessBreakdown = breakdown,
@@ -1187,6 +1199,7 @@ fun brainServiceStarted() {
             pendingCoordinateRequestAt = null,
             missionSummary = "Coordinate request approved and share attempted"
         )
+        refreshMissionState()
     }
 
     fun denyPendingCoordinateRequest() {
@@ -1207,6 +1220,7 @@ fun brainServiceStarted() {
             pendingCoordinateRequestAt = null,
             missionSummary = "Coordinate request denied and response attempted"
         )
+        refreshMissionState()
 
         runAi(
             AiSignal(
@@ -1851,6 +1865,7 @@ MISSION LAYER
 Mission mode: ${state.missionModeLabel}
 Infrastructure: ${state.infrastructureLabel}
 Mission summary: ${state.missionSummary}
+Mission alert: ${state.missionAlertLabel}
 Mission readiness: ${state.missionReadinessScore}/100 · ${state.missionReadinessLabel}
 Readiness breakdown: ${state.missionReadinessBreakdown}
 Recommended action: ${state.missionRecommendedAction}

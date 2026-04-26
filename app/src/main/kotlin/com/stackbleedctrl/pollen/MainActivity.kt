@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
                 missionModeLabel = uiState.missionModeLabel,
                 infrastructureLabel = uiState.infrastructureLabel,
                 missionSummary = uiState.missionSummary,
+                missionAlertLabel = uiState.missionAlertLabel,
                 missionReadinessScore = uiState.missionReadinessScore,
                 missionReadinessLabel = uiState.missionReadinessLabel,
                 missionReadinessBreakdown = uiState.missionReadinessBreakdown,

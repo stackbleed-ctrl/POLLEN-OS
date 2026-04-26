@@ -55,6 +55,7 @@ fun PollenConsoleScreen(
     missionModeLabel: String = "OFFLINE_READY",
     infrastructureLabel: String = "Not required",
     missionSummary: String = "Ready for infrastructureless operation",
+    missionAlertLabel: String = "None",
     missionReadinessScore: Int = 25,
     missionReadinessLabel: String = "Offline ready",
     missionReadinessBreakdown: String = "Peer=no · Route=no · Trust=no · Key=no · Nav=no",
@@ -177,6 +178,7 @@ fun PollenConsoleScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 InfoLine("Mission mode", missionModeLabel)
+                InfoLine("Mission alert", missionAlertLabel)
                 InfoLine("Mission readiness", "$missionReadinessScore/100")
                 InfoLine("Readiness", missionReadinessLabel)
                 InfoLine("Breakdown", missionReadinessBreakdown)
