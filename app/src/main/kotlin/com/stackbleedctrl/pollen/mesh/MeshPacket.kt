@@ -63,7 +63,11 @@ data class MeshPacket(
         val mode = if (peerKeyMaterial.isNullOrBlank()) "aes-gcm-v0" else "aes-gcm-peer-v0"
 
         return copy(
-            payload = MeshCrypto.encrypt(plain, peerKeyMaterial ?: ""),
+            payload = if (peerKeyMaterial.isNullOrBlank()) {
+                MeshCrypto.encrypt(plain)
+            } else {
+                MeshCrypto.encrypt(plain, peerKeyMaterial)
+            },
             encryptionMode = mode,
             integrityTag = null
         )

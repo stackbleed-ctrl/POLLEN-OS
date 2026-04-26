@@ -15,6 +15,7 @@ import com.google.android.gms.nearby.connection.PayloadCallback
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate
 import com.google.android.gms.nearby.connection.Strategy
 import com.stackbleedctrl.pollen.identity.DeviceIdProvider
+import com.stackbleedctrl.pollen.mesh.MeshCrypto
 import com.stackbleedctrl.pollen.mesh.MeshPacket
 import com.stackbleedctrl.pollen.mesh.MeshPacketType
 import com.stackbleedctrl.pollen.oslayer.BrainEvent
@@ -289,7 +290,15 @@ class NearbyMeshCoordinator @Inject constructor(
                         return
                     }
 
-                    val decryptedPacket = packet.decryptPayload()
+                    val inboundPeerKeyMaterial = if (packet.usesPeerKey()) {
+                        packet.senderLabel?.let { senderLabel ->
+                            MeshCrypto.peerKeyMaterial(localName, senderLabel)
+                        }
+                    } else {
+                        null
+                    }
+
+                    val decryptedPacket = packet.decryptPayload(inboundPeerKeyMaterial)
 
                     if (decryptedPacket == null) {
                         emitMeshStatus(
@@ -336,7 +345,13 @@ class NearbyMeshCoordinator @Inject constructor(
                         MeshPacketType.TASK_REQUEST -> {
                             emitMeshStatus("TASK_REQUEST ${decryptedPacket.taskType} from ${decryptedPacket.fromNodeId}")
 
-                            val result = alphaTaskEngine.handleTask(decryptedPacket).encryptPayload()
+                            val responsePeerKeyMaterial = decryptedPacket.senderLabel?.let { senderLabel ->
+                                MeshCrypto.peerKeyMaterial(localName, senderLabel)
+                            }
+
+                            val result = alphaTaskEngine.handleTask(decryptedPacket)
+                                .copy(senderLabel = localName)
+                                .encryptPayload(responsePeerKeyMaterial)
 
                             val response = MeshMessage(
                                 type = MeshMessageType.ROUTE,

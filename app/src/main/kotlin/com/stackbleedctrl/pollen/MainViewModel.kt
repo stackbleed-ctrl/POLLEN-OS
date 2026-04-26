@@ -10,6 +10,7 @@ import com.stackbleedctrl.pollen.ai.AiSignal
 import com.stackbleedctrl.pollen.ai.AiSignalType
 import com.stackbleedctrl.pollen.ai.PollenAiEngine
 import com.stackbleedctrl.pollen.identity.DeviceIdProvider
+import com.stackbleedctrl.pollen.mesh.MeshCrypto
 import com.stackbleedctrl.pollen.mesh.MeshPacket
 import com.stackbleedctrl.pollen.mesh.MeshPacketType
 import com.stackbleedctrl.pollen.sdk.PollenSdk
@@ -205,6 +206,22 @@ fun brainServiceStarted() {
         }
     }
 
+    private fun outboundPeerKeyMaterial(): String? {
+        val identity = state.identity ?: DeviceIdProvider.getIdentity(appContext)
+        val localLabel = "${identity.displayName} · ${identity.nodeId.takeLast(4)}"
+        val peerLabel = state.trustedPeerLabel.ifBlank { state.selectedPeerLabel }
+
+        if (peerLabel.isBlank()) {
+            return null
+        }
+
+        if (state.trustedPeerLabel.isBlank()) {
+            return null
+        }
+
+        return MeshCrypto.peerKeyMaterial(localLabel, peerLabel)
+    }
+
     fun createTaskPacket(taskType: AlphaTaskType, targetNodeId: String? = null): MeshPacket {
         val identity = state.identity ?: DeviceIdProvider.getIdentity(appContext)
         val taskId = UUID.randomUUID().toString().take(8)
@@ -215,7 +232,7 @@ fun brainServiceStarted() {
             toNodeId = targetNodeId,
             taskId = taskId,
             taskType = taskType.name,
-            senderLabel = identity.displayName,
+            senderLabel = "${identity.displayName} · ${identity.nodeId.takeLast(4)}",
             payload = when (taskType) {
                 AlphaTaskType.MESH_ECHO -> "POLLEN mesh echo from ${identity.displayName}"
                 AlphaTaskType.PING -> "PING from ${identity.displayName}"
@@ -251,7 +268,7 @@ fun brainServiceStarted() {
             )
         )
 
-        return packet.encryptPayload()
+        return packet.encryptPayload(outboundPeerKeyMaterial())
     }
 
     fun onTaskResult(packet: MeshPacket) {
