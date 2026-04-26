@@ -10,6 +10,7 @@ import com.stackbleedctrl.pollen.ai.AiSignal
 import com.stackbleedctrl.pollen.ai.AiSignalType
 import com.stackbleedctrl.pollen.ai.PollenAiEngine
 import com.stackbleedctrl.pollen.identity.DeviceIdProvider
+import com.stackbleedctrl.pollen.location.LocationSnapshotProvider
 import com.stackbleedctrl.pollen.mesh.MeshCrypto
 import com.stackbleedctrl.pollen.mesh.MeshPacket
 import com.stackbleedctrl.pollen.mesh.MeshPacketType
@@ -39,6 +40,7 @@ class MainViewModel @Inject constructor(
     private val taskTimeoutMs = 8_000L
     private val peerFreshMs = 10_000L
     private val aiEngine = PollenAiEngine()
+    private val locationProvider = LocationSnapshotProvider(appContext)
     private var lastAiPeerCount: Int? = null
 
     var state by mutableStateOf(
@@ -809,8 +811,61 @@ fun brainServiceStarted() {
         }
     }
 
+    private fun sendCoordinateShareResult(
+        requester: String,
+        requestTaskId: String
+    ) {
+        if (requestTaskId.isBlank() || requestTaskId == "unknown") {
+            appendDebug("coordinate share result blocked: missing original task id")
+            logEvent("Coordinate share result blocked: missing original task id")
+            return
+        }
+
+        val peerKeyMaterial = outboundPeerKeyMaterial()
+
+        if (peerKeyMaterial.isNullOrBlank()) {
+            appendDebug("coordinate share result blocked: peer-key unavailable")
+            logEvent("Coordinate share result blocked: peer-key unavailable")
+            return
+        }
+
+        val identity = state.identity ?: DeviceIdProvider.getIdentity(appContext)
+        val localLabel = "${identity.displayName} · ${identity.nodeId.takeLast(4)}"
+        val snapshot = locationProvider.getLastKnownLocation()
+
+        val shareResult = MeshPacket(
+            type = MeshPacketType.TASK_RESULT,
+            fromNodeId = identity.nodeId,
+            taskId = requestTaskId,
+            taskType = AlphaTaskType.REQUEST_COORDINATES.name,
+            senderLabel = localLabel,
+            payload = snapshot?.toDisplayString()
+                ?: "Coordinates unavailable: permission missing or no last known fix",
+            success = snapshot != null
+        ).encryptPayload(peerKeyMaterial)
+
+        if (!shareResult.usesPeerKey()) {
+            appendDebug("coordinate share result blocked: result was not peer-key encrypted")
+            logEvent("Coordinate share result blocked: result was not peer-key encrypted")
+            return
+        }
+
+        viewModelScope.launch {
+            val sent = sdk.sendMeshPacketToBestPeer(shareResult.toJson())
+
+            if (sent) {
+                appendDebug("coordinate share result sent for request=$requestTaskId")
+                logEvent("Coordinate share sent: request=$requestTaskId")
+            } else {
+                appendDebug("coordinate share result failed: no peer route")
+                logEvent("Coordinate share failed: no peer route")
+            }
+        }
+    }
+
     fun shareCoordinatesForPendingRequest() {
         val requester = state.pendingCoordinateRequestLabel
+        val requestTaskId = state.pendingCoordinateRequestTaskId
 
         if (requester.isBlank()) {
             appendDebug("share coordinates blocked: no pending coordinate request")
@@ -821,7 +876,10 @@ fun brainServiceStarted() {
         appendDebug("coordinate request approved for: $requester")
         logEvent("Coordinate request approved: $requester")
 
-        sendAlphaTask(AlphaTaskType.SHARE_COORDINATES)
+        sendCoordinateShareResult(
+            requester = requester,
+            requestTaskId = requestTaskId
+        )
 
         state = state.copy(
             pendingCoordinateRequestLabel = "",
