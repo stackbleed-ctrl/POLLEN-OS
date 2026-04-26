@@ -290,12 +290,19 @@ fun brainServiceStarted() {
             else -> "Ready without tower/cloud infrastructure"
         }
 
+        val breakdown = "Peer=${if (hasPeer) "yes" else "no"} · " +
+            "Route=${if (hasFreshRoute) "yes" else "no"} · " +
+            "Trust=${if (hasTrust) "yes" else "no"} · " +
+            "Key=${if (hasPeerKey) "yes" else "no"} · " +
+            "Nav=${if (hasNavigationFix) "yes" else "no"}"
+
         state = state.copy(
             missionModeLabel = missionMode,
             infrastructureLabel = "Not required",
             missionSummary = summary,
             missionReadinessScore = score,
-            missionReadinessLabel = missionReadinessLabel(score)
+            missionReadinessLabel = missionReadinessLabel(score),
+            missionReadinessBreakdown = breakdown
         )
     }
 
@@ -1821,6 +1828,8 @@ MISSION LAYER
 Mission mode: ${state.missionModeLabel}
 Infrastructure: ${state.infrastructureLabel}
 Mission summary: ${state.missionSummary}
+Mission readiness: ${state.missionReadinessScore}/100 · ${state.missionReadinessLabel}
+Readiness breakdown: ${state.missionReadinessBreakdown}
 Trusted peer: ${state.trustedPeerLabel.ifBlank { "Untrusted" }}
 Selected peer: ${state.selectedPeerLabel.ifBlank { "None" }}
 Peer freshness: ${state.peerFreshnessLabel}
