@@ -379,6 +379,36 @@ fun brainServiceStarted() {
         return pattern.find(payload)?.groupValues?.getOrNull(1)?.toDoubleOrNull()
     }
 
+    private fun extractAgeMs(payload: String?): Long? {
+        if (payload.isNullOrBlank()) return null
+
+        val pattern = Regex("Age=([0-9]+)ms")
+        return pattern.find(payload)?.groupValues?.getOrNull(1)?.toLongOrNull()
+    }
+
+    private fun formatAgeMs(ageMs: Long?): String {
+        if (ageMs == null) return "Unknown"
+
+        val totalSeconds = ageMs / 1000L
+        val minutes = totalSeconds / 60L
+        val seconds = totalSeconds % 60L
+
+        return when {
+            ageMs < 1_000L -> "${ageMs}ms"
+            minutes > 0L -> "${minutes}m ${seconds}s"
+            else -> "${seconds}s"
+        }
+    }
+
+    private fun coordinateQualityLabel(fixAgeMs: Long?): String {
+        return when {
+            fixAgeMs == null -> "Unknown"
+            fixAgeMs <= 30_000L -> "Fresh"
+            fixAgeMs <= 120_000L -> "Aging"
+            else -> "Stale"
+        }
+    }
+
     private fun distanceMeters(
         lat1: Double,
         lon1: Double,
@@ -477,16 +507,23 @@ fun brainServiceStarted() {
 
         val sender = packet.senderLabel ?: packet.fromNodeId
         val coordinateLabel = "Lat=$peerLat, Lng=$peerLng"
+        val fixAgeMs = extractAgeMs(packet.payload)
+        val fixAgeLabel = formatAgeMs(fixAgeMs)
+        val qualityLabel = coordinateQualityLabel(fixAgeMs)
+        val receivedAt = System.currentTimeMillis()
 
         state = state.copy(
             lastPeerCoordinateLabel = "$sender · $coordinateLabel",
             lastPeerCoordinateDistanceLabel = distanceLabel,
             lastPeerCoordinateBearingLabel = bearingLabel,
-            lastPeerCoordinateFreshnessLabel = "Received ${System.currentTimeMillis()}"
+            lastPeerCoordinateFreshnessLabel = "Received now",
+            lastPeerCoordinateFixAgeLabel = fixAgeLabel,
+            lastPeerCoordinateQualityLabel = qualityLabel,
+            lastPeerCoordinateReceivedAt = receivedAt
         )
 
-        appendDebug("peer coordinates received: $coordinateLabel distance=$distanceLabel bearing=$bearingLabel")
-        logEvent("Peer coordinates received: $sender · distance=$distanceLabel · bearing=$bearingLabel")
+        appendDebug("peer coordinates received: $coordinateLabel distance=$distanceLabel bearing=$bearingLabel quality=$qualityLabel")
+        logEvent("Peer coordinates received: $sender · distance=$distanceLabel · bearing=$bearingLabel · quality=$qualityLabel")
     }
 
     fun onTaskResult(packet: MeshPacket) {

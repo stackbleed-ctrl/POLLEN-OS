@@ -32,6 +32,9 @@ data class PollenUiState(
     val lastPeerCoordinateDistanceLabel: String = "Unknown",
     val lastPeerCoordinateBearingLabel: String = "Unknown",
     val lastPeerCoordinateFreshnessLabel: String = "No coordinate fix",
+    val lastPeerCoordinateFixAgeLabel: String = "Unknown",
+    val lastPeerCoordinateQualityLabel: String = "No fix",
+    val lastPeerCoordinateReceivedAt: Long? = null,
 
     val aiSummary: String = "AI waiting for mesh events",
     val aiRecommendedAction: String = "OBSERVE",
