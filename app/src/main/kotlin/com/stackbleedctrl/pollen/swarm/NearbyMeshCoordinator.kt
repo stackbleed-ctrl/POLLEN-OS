@@ -289,50 +289,59 @@ class NearbyMeshCoordinator @Inject constructor(
                         return
                     }
 
-                    val packetAgeMs = packet.ageMs()
+                    val decryptedPacket = packet.decryptPayload()
+
+                    if (decryptedPacket == null) {
+                        emitMeshStatus(
+                            "Packet rejected: decrypt failed ${packet.taskType ?: packet.type.name}"
+                        )
+                        return
+                    }
+
+                    val packetAgeMs = decryptedPacket.ageMs()
                     val integrityState = when {
-                        !packet.hasIntegrityTag() -> "missing"
-                        packet.integrityValid() -> "valid"
+                        !decryptedPacket.hasIntegrityTag() -> "missing"
+                        decryptedPacket.integrityValid() -> "valid"
                         else -> "invalid"
                     }
 
-                    val packetSender = packet.senderLabel ?: packet.fromNodeId
+                    val packetSender = decryptedPacket.senderLabel ?: decryptedPacket.fromNodeId
 
                     emitMeshStatus(
-                        "Packet security: ${packet.taskType ?: packet.type.name} from $packetSender · age=${packetAgeMs}ms · integrity=$integrityState"
+                        "Packet security: ${decryptedPacket.taskType ?: decryptedPacket.type.name} from $packetSender · age=${packetAgeMs}ms · integrity=$integrityState"
                     )
 
-                    if (!packet.integrityValid()) {
+                    if (!decryptedPacket.integrityValid()) {
                         emitMeshStatus(
-                            "Packet rejected: invalid integrity ${packet.taskType ?: packet.type.name}"
+                            "Packet rejected: invalid integrity ${decryptedPacket.taskType ?: decryptedPacket.type.name}"
                         )
                         return
                     }
 
-                    if (isReplayPacket(packet.packetNonce)) {
+                    if (isReplayPacket(decryptedPacket.packetNonce)) {
                         emitMeshStatus(
-                            "Packet rejected: replay ${packet.taskType ?: packet.type.name} · nonce=${packet.packetNonce.takeLast(6)}"
+                            "Packet rejected: replay ${decryptedPacket.taskType ?: decryptedPacket.type.name} · nonce=${decryptedPacket.packetNonce.takeLast(6)}"
                         )
                         return
                     }
 
-                    if (packet.isStale(maxPacketAgeMs)) {
+                    if (decryptedPacket.isStale(maxPacketAgeMs)) {
                         emitMeshStatus(
-                            "Packet rejected: stale ${packet.taskType ?: packet.type.name} · age=${packetAgeMs}ms"
+                            "Packet rejected: stale ${decryptedPacket.taskType ?: decryptedPacket.type.name} · age=${packetAgeMs}ms"
                         )
                         return
                     }
 
-                    when (packet.type) {
+                    when (decryptedPacket.type) {
                         MeshPacketType.TASK_REQUEST -> {
-                            emitMeshStatus("TASK_REQUEST ${packet.taskType} from ${packet.fromNodeId}")
+                            emitMeshStatus("TASK_REQUEST ${decryptedPacket.taskType} from ${decryptedPacket.fromNodeId}")
 
-                            val result = alphaTaskEngine.handleTask(packet)
+                            val result = alphaTaskEngine.handleTask(decryptedPacket).encryptPayload()
 
                             val response = MeshMessage(
                                 type = MeshMessageType.ROUTE,
                                 fromNodeId = result.fromNodeId,
-                                toNodeId = packet.fromNodeId,
+                                toNodeId = decryptedPacket.fromNodeId,
                                 payload = result.toJson()
                             )
 
@@ -346,7 +355,7 @@ class NearbyMeshCoordinator @Inject constructor(
                         }
 
                         else -> {
-                            emitMeshStatus("PACKET ${packet.type} from ${packet.fromNodeId}")
+                            emitMeshStatus("PACKET ${decryptedPacket.type} from ${decryptedPacket.fromNodeId}")
                         }
                     }
                 }

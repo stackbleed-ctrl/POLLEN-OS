@@ -25,7 +25,8 @@ data class MeshPacket(
     val protocolVersion: String = "0.6",
     val senderLabel: String? = null,
     val packetNonce: String = UUID.randomUUID().toString(),
-    val integrityTag: String? = null
+    val integrityTag: String? = null,
+    val encryptionMode: String = "none"
 ) {
     fun expectedIntegrityTag(): String {
         return computeIntegrityTag(
@@ -41,6 +42,39 @@ data class MeshPacket(
             protocolVersion = protocolVersion,
             senderLabel = senderLabel,
             packetNonce = packetNonce
+        )
+    }
+
+    fun isEncrypted(): Boolean {
+        return encryptionMode == "aes-gcm-v0"
+    }
+
+    fun encryptPayload(): MeshPacket {
+        val plain = payload ?: return this
+
+        if (isEncrypted()) {
+            return this
+        }
+
+        return copy(
+            payload = MeshCrypto.encrypt(plain),
+            encryptionMode = "aes-gcm-v0",
+            integrityTag = null
+        )
+    }
+
+    fun decryptPayload(): MeshPacket? {
+        if (!isEncrypted()) {
+            return this
+        }
+
+        val cipherText = payload ?: return null
+        val plainText = MeshCrypto.decrypt(cipherText) ?: return null
+
+        return copy(
+            payload = plainText,
+            encryptionMode = "none",
+            integrityTag = null
         )
     }
 
@@ -80,6 +114,7 @@ data class MeshPacket(
             put("senderLabel", senderLabel)
             put("packetNonce", packetNonce)
             put("integrityTag", resolvedIntegrityTag())
+            put("encryptionMode", encryptionMode)
         }.toString()
     }
 
@@ -116,7 +151,8 @@ data class MeshPacket(
                     packetNonce = json.optString("packetNonce")
                         .takeIf { it.isNotBlank() && it != "null" }
                         ?: UUID.randomUUID().toString(),
-                    integrityTag = json.optString("integrityTag").takeIf { it.isNotBlank() && it != "null" }
+                    integrityTag = json.optString("integrityTag").takeIf { it.isNotBlank() && it != "null" },
+                    encryptionMode = json.optString("encryptionMode", "none")
                 )
             } catch (_: Exception) {
                 null

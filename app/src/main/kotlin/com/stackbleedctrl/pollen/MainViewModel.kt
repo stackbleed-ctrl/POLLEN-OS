@@ -251,7 +251,7 @@ fun brainServiceStarted() {
             )
         )
 
-        return packet
+        return packet.encryptPayload()
     }
 
     fun onTaskResult(packet: MeshPacket) {
