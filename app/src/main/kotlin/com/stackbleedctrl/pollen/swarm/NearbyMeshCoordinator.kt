@@ -425,8 +425,26 @@ class NearbyMeshCoordinator @Inject constructor(
                         }
 
                         MeshPacketType.TASK_RESULT -> {
-                            bus.tryEmit(BrainEvent.MeshStatus("POLLEN_TASK_RESULT|${packet.toJson()}"))
-                            emitMeshStatus("TASK_RESULT from ${packet.fromNodeId}: ${packet.payload}")
+                            if (isSensitiveTask(decryptedPacket) && !packet.usesPeerKey()) {
+                                emitMeshStatus(
+                                    "Sensitive result rejected: ${decryptedPacket.taskType} requires peer-key encryption"
+                                )
+                                return
+                            }
+
+                            if (isSensitiveTask(decryptedPacket) && decryptedPacket.senderLabel.isNullOrBlank()) {
+                                emitMeshStatus(
+                                    "Sensitive result rejected: ${decryptedPacket.taskType} missing sender label"
+                                )
+                                return
+                            }
+
+                            emitMeshStatus(
+                                "Sensitive result accepted: ${decryptedPacket.taskType ?: decryptedPacket.type.name} · encryption=$encryptionState · integrity=$integrityState"
+                            )
+
+                            bus.tryEmit(BrainEvent.MeshStatus("POLLEN_TASK_RESULT|${decryptedPacket.toJson()}"))
+                            emitMeshStatus("TASK_RESULT from ${decryptedPacket.fromNodeId}: ${decryptedPacket.payload}")
                         }
 
                         else -> {
