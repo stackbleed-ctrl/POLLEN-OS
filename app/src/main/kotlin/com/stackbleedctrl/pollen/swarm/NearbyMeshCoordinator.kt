@@ -40,6 +40,8 @@ class NearbyMeshCoordinator @Inject constructor(
     private val alphaTaskEngine = AlphaTaskEngine(context)
     private val peers: LinkedHashMap<String, PeerNode> = linkedMapOf()
     private val maxPacketAgeMs = 60_000L
+    private val recentPacketNonces: LinkedHashMap<String, Long> = linkedMapOf()
+    private val maxRecentPacketNonces = 200
 
     fun start() {
         tracer.trace("mesh", "start advertise + discover")
@@ -139,6 +141,29 @@ class NearbyMeshCoordinator @Inject constructor(
         client.sendPayload(endpointId, Payload.fromBytes(text.toByteArray()))
         emitMeshStatus("Payload sent directly to ${peerLabel(endpointId)}")
         return true
+    }
+
+    private fun isReplayPacket(packetNonce: String): Boolean {
+        val now = System.currentTimeMillis()
+
+        val expired = recentPacketNonces
+            .filterValues { now - it > maxPacketAgeMs }
+            .keys
+
+        expired.forEach { recentPacketNonces.remove(it) }
+
+        if (recentPacketNonces.containsKey(packetNonce)) {
+            return true
+        }
+
+        recentPacketNonces[packetNonce] = now
+
+        while (recentPacketNonces.size > maxRecentPacketNonces) {
+            val oldestKey = recentPacketNonces.entries.firstOrNull()?.key ?: break
+            recentPacketNonces.remove(oldestKey)
+        }
+
+        return false
     }
 
     private fun connectedPeerCount(): Int =
@@ -280,6 +305,13 @@ class NearbyMeshCoordinator @Inject constructor(
                     if (!packet.integrityValid()) {
                         emitMeshStatus(
                             "Packet rejected: invalid integrity ${packet.taskType ?: packet.type.name}"
+                        )
+                        return
+                    }
+
+                    if (isReplayPacket(packet.packetNonce)) {
+                        emitMeshStatus(
+                            "Packet rejected: replay ${packet.taskType ?: packet.type.name} · nonce=${packet.packetNonce.takeLast(6)}"
                         )
                         return
                     }
