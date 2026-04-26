@@ -183,6 +183,44 @@ fun PollenConsoleScreen(
                 InfoLine("Recommended action", missionRecommendedAction)
                 InfoLine("Infrastructure", infrastructureLabel)
                 InfoLine("Mission summary", missionSummary)
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                GoldButton(
+                    text = "Run Recommended Action",
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    when {
+                        missionRecommendedAction.contains("Start brain", ignoreCase = true) -> {
+                            onStartBrain()
+                        }
+
+                        missionRecommendedAction.contains("Trust", ignoreCase = true) ||
+                            missionRecommendedAction.contains("Re-trust", ignoreCase = true) -> {
+                            onTrustSelectedPeer()
+                        }
+
+                        missionRecommendedAction.contains("Request peer coordinates", ignoreCase = true) -> {
+                            onAlphaTask(AlphaTaskType.REQUEST_COORDINATES)
+                        }
+
+                        missionRecommendedAction.contains("Move closer", ignoreCase = true) ||
+                            missionRecommendedAction.contains("fresh route", ignoreCase = true) -> {
+                            onMeshPing()
+                        }
+
+                        missionRecommendedAction.contains("Mission ready", ignoreCase = true) -> {
+                            onRunMissionDemoSequence()
+                        }
+
+                        else -> {
+                            onMeshPing()
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 InfoLine("Route", if (taskRouteReady) "Fresh route ready" else "Waiting for route")
                 InfoLine("Peer", selectedPeerLabel.ifBlank { "No selected peer" })
                 InfoLine("Freshness", peerFreshnessLabel)
