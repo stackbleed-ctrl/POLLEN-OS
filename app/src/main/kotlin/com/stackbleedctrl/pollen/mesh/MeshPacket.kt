@@ -27,8 +27,8 @@ data class MeshPacket(
     val packetNonce: String = UUID.randomUUID().toString(),
     val integrityTag: String? = null
 ) {
-    fun resolvedIntegrityTag(): String {
-        return integrityTag ?: computeIntegrityTag(
+    fun expectedIntegrityTag(): String {
+        return computeIntegrityTag(
             packetId = packetId,
             type = type.name,
             fromNodeId = fromNodeId,
@@ -44,8 +44,16 @@ data class MeshPacket(
         )
     }
 
+    fun resolvedIntegrityTag(): String {
+        return integrityTag ?: expectedIntegrityTag()
+    }
+
     fun hasIntegrityTag(): Boolean {
-        return resolvedIntegrityTag().isNotBlank()
+        return integrityTag?.isNotBlank() == true
+    }
+
+    fun integrityValid(): Boolean {
+        return integrityTag == null || integrityTag == expectedIntegrityTag()
     }
 
     fun ageMs(now: Long = System.currentTimeMillis()): Long {

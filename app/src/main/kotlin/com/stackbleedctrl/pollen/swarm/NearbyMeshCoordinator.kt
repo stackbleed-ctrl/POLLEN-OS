@@ -265,13 +265,24 @@ class NearbyMeshCoordinator @Inject constructor(
                     }
 
                     val packetAgeMs = packet.ageMs()
-                    val integrityState = if (packet.hasIntegrityTag()) "present" else "missing"
+                    val integrityState = when {
+                        !packet.hasIntegrityTag() -> "missing"
+                        packet.integrityValid() -> "valid"
+                        else -> "invalid"
+                    }
 
                     val packetSender = packet.senderLabel ?: packet.fromNodeId
 
                     emitMeshStatus(
                         "Packet security: ${packet.taskType ?: packet.type.name} from $packetSender · age=${packetAgeMs}ms · integrity=$integrityState"
                     )
+
+                    if (!packet.integrityValid()) {
+                        emitMeshStatus(
+                            "Packet rejected: invalid integrity ${packet.taskType ?: packet.type.name}"
+                        )
+                        return
+                    }
 
                     if (packet.isStale(maxPacketAgeMs)) {
                         emitMeshStatus(
