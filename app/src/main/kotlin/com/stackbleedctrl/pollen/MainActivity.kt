@@ -101,7 +101,9 @@ class MainActivity : ComponentActivity() {
                 onClearTrustedPeer = vm::clearTrustedPeer,
                 onExportLogs = ::shareTesterLog,
                 onRunFullMeshTest = vm::runFullMeshTest,
-                onRunRangeProbe = vm::runRangeProbe
+                onRunRangeProbe = vm::runRangeProbe,
+                onSharePendingCoordinates = vm::shareCoordinatesForPendingRequest,
+                onDenyCoordinateRequest = vm::denyPendingCoordinateRequest
             )
         }
     }

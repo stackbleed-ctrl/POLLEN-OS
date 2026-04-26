@@ -111,6 +111,8 @@ fun PollenConsoleScreen(
     onRunCompatibilityCheck: () -> Unit = {},
     onRunDemoSequence: () -> Unit = {},
     onRunAlphaVerification: () -> Unit = {},
+    onSharePendingCoordinates: () -> Unit = {},
+    onDenyCoordinateRequest: () -> Unit = {},
     onStartFieldTest: () -> Unit = {},
     onMarkFieldDistanceCheck: () -> Unit = {},
     onEndFieldTest: () -> Unit = {}
@@ -183,10 +185,19 @@ fun PollenConsoleScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     GoldButton(
-                        text = "Share My Coordinates · Explicit",
+                        text = "Approve · Share My Coordinates",
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        onAlphaTask(AlphaTaskType.SHARE_COORDINATES)
+                        onSharePendingCoordinates()
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    GoldButton(
+                        text = "Deny Coordinate Request",
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        onDenyCoordinateRequest()
                     }
                 }
             }

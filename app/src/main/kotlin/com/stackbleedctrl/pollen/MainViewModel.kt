@@ -756,6 +756,53 @@ fun brainServiceStarted() {
         }
     }
 
+    fun shareCoordinatesForPendingRequest() {
+        val requester = state.pendingCoordinateRequestLabel
+
+        if (requester.isBlank()) {
+            appendDebug("share coordinates blocked: no pending coordinate request")
+            logEvent("Share coordinates blocked: no pending request")
+            return
+        }
+
+        appendDebug("coordinate request approved for: $requester")
+        logEvent("Coordinate request approved: $requester")
+
+        sendAlphaTask(AlphaTaskType.SHARE_COORDINATES)
+
+        state = state.copy(
+            pendingCoordinateRequestLabel = "",
+            pendingCoordinateRequestTaskId = "",
+            pendingCoordinateRequestAt = null,
+            missionSummary = "Coordinate request approved and share attempted"
+        )
+    }
+
+    fun denyPendingCoordinateRequest() {
+        val requester = state.pendingCoordinateRequestLabel.ifBlank { "unknown requester" }
+
+        appendDebug("coordinate request denied: $requester")
+        logEvent("Coordinate request denied: $requester")
+
+        state = state.copy(
+            pendingCoordinateRequestLabel = "",
+            pendingCoordinateRequestTaskId = "",
+            pendingCoordinateRequestAt = null,
+            missionSummary = "Coordinate request denied"
+        )
+
+        runAi(
+            AiSignal(
+                type = AiSignalType.SENSITIVE_TASK_NOTICE,
+                message = "Coordinate request denied",
+                peerCount = state.peerCount,
+                meshStatus = state.meshStatus,
+                trustedPeerLabel = state.trustedPeerLabel,
+                taskType = AlphaTaskType.REQUEST_COORDINATES.name
+            )
+        )
+    }
+
     fun sendAlphaTask(taskType: AlphaTaskType) {
         if (requiresPeerKeyOnly(taskType) && !hasPeerKeyReadyForSensitiveTask()) {
             appendDebug("blocked sensitive task: ${taskType.name} requires trusted peer + fresh route + peer-key mode")
