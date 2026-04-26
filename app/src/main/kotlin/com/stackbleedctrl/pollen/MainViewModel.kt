@@ -1694,60 +1694,104 @@ fun brainServiceStarted() {
     }
 
     fun buildTesterLog(): String {
-        val identity = state.identity
+        val identity = state.identity ?: DeviceIdProvider.getIdentity(appContext)
 
-        val taskLines = if (state.tasks.isEmpty()) {
-            listOf("No tasks recorded")
+        val recentTasks = state.tasks.take(12).joinToString("\n") { task ->
+            "- ${task.taskType} · ${task.status} · latency=${task.latencyMs ?: "n/a"}ms · result=${task.result ?: "pending"}"
+        }.ifBlank {
+            "- No tasks recorded"
+        }
+
+        val recentEvents = state.eventLog.take(20).joinToString("\n") { event ->
+            "- $event"
+        }.ifBlank {
+            "- No events recorded"
+        }
+
+        val recentDebug = state.debugLines.takeLast(20).joinToString("\n") { line ->
+            "- $line"
+        }.ifBlank {
+            "- No debug lines recorded"
+        }
+
+        val pendingCoordinateRequest = if (state.pendingCoordinateRequestLabel.isBlank()) {
+            "None"
         } else {
-            state.tasks.take(20).map { task ->
-                "- ${task.taskType} | ${task.status} | latency=${task.latencyMs ?: "-"}ms | result=${task.result ?: "-"}"
-            }
+            "${state.pendingCoordinateRequestLabel} · task=${state.pendingCoordinateRequestTaskId.ifBlank { "unknown" }}"
         }
 
-        val eventLines = if (state.eventLog.isEmpty()) {
-            listOf("No events recorded")
-        } else {
-            state.eventLog.take(30)
-        }
+        return """
+POLLEN-OS TESTER LOG
+====================
 
-        val debugLines = if (state.debugLines.isEmpty()) {
-            listOf("No debug lines recorded")
-        } else {
-            state.debugLines.takeLast(30)
-        }
+BUILD
+-----
+Build: ${state.buildLabel}
+Protocol: ${state.protocolLabel}
+Generated: ${System.currentTimeMillis()}
 
-        return buildString {
-            appendLine("POLLEN-OS ALPHA TESTER LOG")
-            appendLine("================================")
-            appendLine("Version: ${PollenBuildInfo.APP_VERSION_LABEL}")
-            appendLine("Protocol: ${PollenBuildInfo.PROTOCOL_VERSION}")
-            appendLine("Task layer: ${PollenBuildInfo.TASK_LAYER_VERSION}")
-            appendLine("AI layer: ${PollenBuildInfo.AI_LAYER_VERSION}")
-            appendLine()
-            appendLine("DEVICE")
-            appendLine("Name: ${identity?.displayName ?: "Unknown"}")
-            appendLine("Node ID: ${identity?.nodeId ?: "Unknown"}")
-            appendLine("Model: ${identity?.modelName ?: "Unknown"}")
-            appendLine("Role: ${identity?.role?.name ?: "Unknown"}")
-            appendLine()
-            appendLine("MESH")
-            appendLine("Status: ${state.meshStatus}")
-            appendLine("Peer count: ${state.peerCount}")
-            appendLine("Selected peer: ${state.selectedPeerLabel.ifBlank { "None" }}")
-            appendLine("Peer freshness: ${state.peerFreshnessLabel}")
-            appendLine("Task route ready: ${state.taskRouteReady}")
-            appendLine("Last intent: ${state.lastIntent}")
-            appendLine("Last decision: ${state.lastDecision}")
-            appendLine()
-            appendLine("TASKS")
-            taskLines.forEach { appendLine(it) }
-            appendLine()
-            appendLine("EVENT FEED")
-            eventLines.forEach { appendLine(it) }
-            appendLine()
-            appendLine("DEBUG LOG")
-            debugLines.forEach { appendLine(it) }
-        }
+DEVICE
+------
+Name: ${identity.displayName}
+Node ID: ${identity.nodeId}
+Model: ${identity.modelName}
+Role: ${identity.role}
+
+MISSION LAYER
+-------------
+Mission mode: ${state.missionModeLabel}
+Infrastructure: ${state.infrastructureLabel}
+Mission summary: ${state.missionSummary}
+Trusted peer: ${state.trustedPeerLabel.ifBlank { "Untrusted" }}
+Selected peer: ${state.selectedPeerLabel.ifBlank { "None" }}
+Peer freshness: ${state.peerFreshnessLabel}
+Route ready: ${state.taskRouteReady}
+Pairing: ${state.keyModeLabel}
+Encryption: ${state.encryptionModeLabel}
+Pending coordinate request: $pendingCoordinateRequest
+
+NAVIGATION FIX
+--------------
+Navigation: ${state.lastPeerCoordinateNavigationSummary}
+Peer coordinates: ${state.lastPeerCoordinateLabel}
+Distance: ${state.lastPeerCoordinateDistanceLabel}
+Bearing: ${state.lastPeerCoordinateBearingLabel}
+Peer fix age: ${state.lastPeerCoordinateFixAgeLabel}
+Fix quality: ${state.lastPeerCoordinateQualityLabel}
+Accuracy: ${state.lastPeerCoordinateAccuracyLabel}
+Confidence: ${state.lastPeerCoordinateConfidenceLabel}
+Received at: ${state.lastPeerCoordinateReceivedAt ?: "None"}
+
+MESH SUMMARY
+------------
+Peer count: ${state.peerCount}
+Compatibility: ${state.compatibilityStatus}
+Peer protocol: ${state.peerProtocolVersion}
+Peer supported tasks: ${state.peerSupportedTasks}
+Completed tasks: ${completedTaskCount()}
+Failed tasks: ${failedTaskCount()}
+Pending tasks: ${pendingTaskCount()}
+Average latency: ${averageLatencyMs()?.let { "${it}ms" } ?: "n/a"}
+
+AI
+--
+Summary: ${state.aiSummary}
+Recommended action: ${state.aiRecommendedAction}
+Confidence: ${(state.aiConfidence * 100).toInt()}%
+Health score: ${state.aiHealthScore}/100
+
+RECENT TASKS
+------------
+$recentTasks
+
+EVENT LOG
+---------
+$recentEvents
+
+DEBUG
+-----
+$recentDebug
+""".trimIndent()
     }
 
     fun logEvent(message: String) {
