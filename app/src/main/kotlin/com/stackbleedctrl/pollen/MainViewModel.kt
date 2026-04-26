@@ -270,6 +270,9 @@ fun brainServiceStarted() {
             taskId = taskId,
             taskType = taskType.name,
             targetNodeId = targetNodeId,
+            targetPeerLabel = state.trustedPeerLabel
+                .ifBlank { state.selectedPeerLabel }
+                .takeIf { it.isNotBlank() },
             status = TaskStatus.PENDING
         )
 
@@ -323,6 +326,62 @@ fun brainServiceStarted() {
                 )
             )
             return
+        }
+
+        if (existingTask.taskType == AlphaTaskType.LOCATION_SNAPSHOT.name) {
+            val expectedPeerLabel = existingTask.targetPeerLabel
+            val resultSenderLabel = packet.senderLabel
+
+            if (expectedPeerLabel.isNullOrBlank()) {
+                appendDebug("sensitive result rejected: LOCATION_SNAPSHOT missing expected peer binding")
+                logEvent("Sensitive result rejected: LOCATION_SNAPSHOT · missing expected peer binding")
+                runAi(
+                    AiSignal(
+                        type = AiSignalType.ERROR,
+                        message = "Rejected sensitive result: missing expected peer binding",
+                        peerCount = state.peerCount,
+                        meshStatus = state.meshStatus,
+                        trustedPeerLabel = state.trustedPeerLabel,
+                        taskType = packet.taskType
+                    )
+                )
+                return
+            }
+
+            if (resultSenderLabel.isNullOrBlank()) {
+                appendDebug("sensitive result rejected: LOCATION_SNAPSHOT missing sender label")
+                logEvent("Sensitive result rejected: LOCATION_SNAPSHOT · missing sender label")
+                runAi(
+                    AiSignal(
+                        type = AiSignalType.ERROR,
+                        message = "Rejected sensitive result: missing sender label",
+                        peerCount = state.peerCount,
+                        meshStatus = state.meshStatus,
+                        trustedPeerLabel = state.trustedPeerLabel,
+                        taskType = packet.taskType
+                    )
+                )
+                return
+            }
+
+            if (resultSenderLabel != expectedPeerLabel) {
+                appendDebug("sensitive result rejected: LOCATION_SNAPSHOT sender mismatch expected=$expectedPeerLabel got=$resultSenderLabel")
+                logEvent("Sensitive result rejected: LOCATION_SNAPSHOT · sender mismatch")
+                runAi(
+                    AiSignal(
+                        type = AiSignalType.ERROR,
+                        message = "Rejected sensitive result: sender mismatch",
+                        peerCount = state.peerCount,
+                        meshStatus = state.meshStatus,
+                        trustedPeerLabel = state.trustedPeerLabel,
+                        taskType = packet.taskType
+                    )
+                )
+                return
+            }
+
+            appendDebug("sensitive result route-bound: LOCATION_SNAPSHOT from $resultSenderLabel")
+            logEvent("Sensitive result route-bound: LOCATION_SNAPSHOT · $resultSenderLabel")
         }
 
         val completedAt = System.currentTimeMillis()
