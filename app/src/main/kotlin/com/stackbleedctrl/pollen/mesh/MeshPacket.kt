@@ -46,30 +46,41 @@ data class MeshPacket(
     }
 
     fun isEncrypted(): Boolean {
-        return encryptionMode == "aes-gcm-v0"
+        return encryptionMode == "aes-gcm-v0" || encryptionMode == "aes-gcm-peer-v0"
     }
 
-    fun encryptPayload(): MeshPacket {
+    fun usesPeerKey(): Boolean {
+        return encryptionMode == "aes-gcm-peer-v0"
+    }
+
+    fun encryptPayload(peerKeyMaterial: String? = null): MeshPacket {
         val plain = payload ?: return this
 
         if (isEncrypted()) {
             return this
         }
 
+        val mode = if (peerKeyMaterial.isNullOrBlank()) "aes-gcm-v0" else "aes-gcm-peer-v0"
+
         return copy(
-            payload = MeshCrypto.encrypt(plain),
-            encryptionMode = "aes-gcm-v0",
+            payload = MeshCrypto.encrypt(plain, peerKeyMaterial ?: ""),
+            encryptionMode = mode,
             integrityTag = null
         )
     }
 
-    fun decryptPayload(): MeshPacket? {
+    fun decryptPayload(peerKeyMaterial: String? = null): MeshPacket? {
         if (!isEncrypted()) {
             return this
         }
 
         val cipherText = payload ?: return null
-        val plainText = MeshCrypto.decrypt(cipherText) ?: return null
+
+        val plainText = if (usesPeerKey()) {
+            if (peerKeyMaterial.isNullOrBlank()) null else MeshCrypto.decrypt(cipherText, peerKeyMaterial)
+        } else {
+            MeshCrypto.decrypt(cipherText)
+        } ?: return null
 
         return copy(
             payload = plainText,
