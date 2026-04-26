@@ -409,6 +409,26 @@ fun brainServiceStarted() {
         }
     }
 
+    private fun extractAccuracyMeters(payload: String?): Float? {
+        if (payload.isNullOrBlank()) return null
+
+        val pattern = Regex("Accuracy=([0-9.]+)m")
+        return pattern.find(payload)?.groupValues?.getOrNull(1)?.toFloatOrNull()
+    }
+
+    private fun formatAccuracy(accuracyMeters: Float?): String {
+        return accuracyMeters?.let { "${it.roundToInt()}m" } ?: "Unknown"
+    }
+
+    private fun coordinateConfidenceLabel(accuracyMeters: Float?): String {
+        return when {
+            accuracyMeters == null -> "Unknown"
+            accuracyMeters <= 15f -> "High"
+            accuracyMeters <= 50f -> "Medium"
+            else -> "Low"
+        }
+    }
+
     private fun distanceMeters(
         lat1: Double,
         lon1: Double,
@@ -510,6 +530,9 @@ fun brainServiceStarted() {
         val fixAgeMs = extractAgeMs(packet.payload)
         val fixAgeLabel = formatAgeMs(fixAgeMs)
         val qualityLabel = coordinateQualityLabel(fixAgeMs)
+        val accuracyMeters = extractAccuracyMeters(packet.payload)
+        val accuracyLabel = formatAccuracy(accuracyMeters)
+        val confidenceLabel = coordinateConfidenceLabel(accuracyMeters)
         val receivedAt = System.currentTimeMillis()
 
         state = state.copy(
@@ -519,11 +542,13 @@ fun brainServiceStarted() {
             lastPeerCoordinateFreshnessLabel = "Received now",
             lastPeerCoordinateFixAgeLabel = fixAgeLabel,
             lastPeerCoordinateQualityLabel = qualityLabel,
+            lastPeerCoordinateAccuracyLabel = accuracyLabel,
+            lastPeerCoordinateConfidenceLabel = confidenceLabel,
             lastPeerCoordinateReceivedAt = receivedAt
         )
 
-        appendDebug("peer coordinates received: $coordinateLabel distance=$distanceLabel bearing=$bearingLabel quality=$qualityLabel")
-        logEvent("Peer coordinates received: $sender · distance=$distanceLabel · bearing=$bearingLabel · quality=$qualityLabel")
+        appendDebug("peer coordinates received: $coordinateLabel distance=$distanceLabel bearing=$bearingLabel quality=$qualityLabel accuracy=$accuracyLabel confidence=$confidenceLabel")
+        logEvent("Peer coordinates received: $sender · distance=$distanceLabel · bearing=$bearingLabel · quality=$qualityLabel · accuracy=$accuracyLabel")
     }
 
     fun onTaskResult(packet: MeshPacket) {

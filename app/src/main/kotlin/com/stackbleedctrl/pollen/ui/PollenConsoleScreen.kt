@@ -64,6 +64,8 @@ fun PollenConsoleScreen(
     lastPeerCoordinateFreshnessLabel: String = "No coordinate fix",
     lastPeerCoordinateFixAgeLabel: String = "Unknown",
     lastPeerCoordinateQualityLabel: String = "No fix",
+    lastPeerCoordinateAccuracyLabel: String = "Unknown",
+    lastPeerCoordinateConfidenceLabel: String = "Unknown",
     lastPeerCoordinateReceivedAt: Long? = null,
     lastIntent: String = "Mesh Health Check",
     lastDecision: String = "Waiting",
@@ -177,6 +179,8 @@ fun PollenConsoleScreen(
                 InfoLine("Bearing", lastPeerCoordinateBearingLabel)
                 InfoLine("Peer fix age", lastPeerCoordinateFixAgeLabel)
                 InfoLine("Fix quality", lastPeerCoordinateQualityLabel)
+                InfoLine("Accuracy", lastPeerCoordinateAccuracyLabel)
+                InfoLine("Fix confidence", lastPeerCoordinateConfidenceLabel)
                 InfoLine("Coordinate freshness", lastPeerCoordinateFreshnessLabel)
                 InfoLine("Received age", displayDurationFrom(lastPeerCoordinateReceivedAt))
             }
