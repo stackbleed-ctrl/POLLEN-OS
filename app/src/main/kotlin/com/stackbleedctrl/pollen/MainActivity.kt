@@ -67,6 +67,7 @@ class MainActivity : ComponentActivity() {
                 pendingCoordinateRequestAt = uiState.pendingCoordinateRequestAt,
                 lastPeerCoordinateLabel = uiState.lastPeerCoordinateLabel,
                 lastPeerCoordinateDistanceLabel = uiState.lastPeerCoordinateDistanceLabel,
+                lastPeerCoordinateBearingLabel = uiState.lastPeerCoordinateBearingLabel,
                 lastPeerCoordinateFreshnessLabel = uiState.lastPeerCoordinateFreshnessLabel,
                 lastIntent = uiState.lastIntent.ifBlank { "Mesh Health Check" },
                 lastDecision = uiState.lastDecision,

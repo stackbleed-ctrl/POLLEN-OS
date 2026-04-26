@@ -35,6 +35,7 @@ import kotlin.math.roundToInt
 import kotlin.math.pow
 import kotlin.math.cos
 import kotlin.math.atan2
+import kotlin.math.PI
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -405,6 +406,34 @@ fun brainServiceStarted() {
         }
     }
 
+    private fun bearingDegrees(
+        lat1: Double,
+        lon1: Double,
+        lat2: Double,
+        lon2: Double
+    ): Double {
+        val rLat1 = Math.toRadians(lat1)
+        val rLat2 = Math.toRadians(lat2)
+        val dLon = Math.toRadians(lon2 - lon1)
+
+        val y = sin(dLon) * cos(rLat2)
+        val x = cos(rLat1) * sin(rLat2) -
+            sin(rLat1) * cos(rLat2) * cos(dLon)
+
+        val bearing = atan2(y, x) * 180.0 / PI
+        return (bearing + 360.0) % 360.0
+    }
+
+    private fun cardinalDirection(degrees: Double): String {
+        val directions = listOf("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+        val index = (((degrees + 22.5) % 360.0) / 45.0).toInt()
+        return directions[index]
+    }
+
+    private fun formatBearing(degrees: Double): String {
+        return "${cardinalDirection(degrees)} · ${degrees.roundToInt()}°"
+    }
+
     private fun updatePeerCoordinateState(packet: MeshPacket) {
         if (packet.taskType != AlphaTaskType.REQUEST_COORDINATES.name || packet.success != true) {
             return
@@ -433,17 +462,31 @@ fun brainServiceStarted() {
             "Local location unavailable"
         }
 
+        val bearingLabel = if (localSnapshot != null) {
+            formatBearing(
+                bearingDegrees(
+                    lat1 = localSnapshot.latitude,
+                    lon1 = localSnapshot.longitude,
+                    lat2 = peerLat,
+                    lon2 = peerLng
+                )
+            )
+        } else {
+            "Local location unavailable"
+        }
+
         val sender = packet.senderLabel ?: packet.fromNodeId
         val coordinateLabel = "Lat=$peerLat, Lng=$peerLng"
 
         state = state.copy(
             lastPeerCoordinateLabel = "$sender · $coordinateLabel",
             lastPeerCoordinateDistanceLabel = distanceLabel,
+            lastPeerCoordinateBearingLabel = bearingLabel,
             lastPeerCoordinateFreshnessLabel = "Received ${System.currentTimeMillis()}"
         )
 
-        appendDebug("peer coordinates received: $coordinateLabel distance=$distanceLabel")
-        logEvent("Peer coordinates received: $sender · distance=$distanceLabel")
+        appendDebug("peer coordinates received: $coordinateLabel distance=$distanceLabel bearing=$bearingLabel")
+        logEvent("Peer coordinates received: $sender · distance=$distanceLabel · bearing=$bearingLabel")
     }
 
     fun onTaskResult(packet: MeshPacket) {

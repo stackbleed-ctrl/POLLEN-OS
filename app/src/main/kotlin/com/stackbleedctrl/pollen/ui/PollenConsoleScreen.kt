@@ -60,6 +60,7 @@ fun PollenConsoleScreen(
     pendingCoordinateRequestAt: Long? = null,
     lastPeerCoordinateLabel: String = "None",
     lastPeerCoordinateDistanceLabel: String = "Unknown",
+    lastPeerCoordinateBearingLabel: String = "Unknown",
     lastPeerCoordinateFreshnessLabel: String = "No coordinate fix",
     lastIntent: String = "Mesh Health Check",
     lastDecision: String = "Waiting",
@@ -170,6 +171,7 @@ fun PollenConsoleScreen(
                 InfoLine("Encryption", encryptionModeLabel)
                 InfoLine("Peer coordinates", lastPeerCoordinateLabel)
                 InfoLine("Distance estimate", lastPeerCoordinateDistanceLabel)
+                InfoLine("Bearing", lastPeerCoordinateBearingLabel)
                 InfoLine("Coordinate freshness", lastPeerCoordinateFreshnessLabel)
             }
 
