@@ -290,6 +290,13 @@ class NearbyMeshCoordinator @Inject constructor(
                         return
                     }
 
+                    if (packet.usesPeerKey() && packet.senderLabel.isNullOrBlank()) {
+                        emitMeshStatus(
+                            "Packet rejected: peer-key packet missing sender label ${packet.taskType ?: packet.type.name}"
+                        )
+                        return
+                    }
+
                     val inboundPeerKeyMaterial = if (packet.usesPeerKey()) {
                         packet.senderLabel?.let { senderLabel ->
                             MeshCrypto.peerKeyMaterial(localName, senderLabel)
