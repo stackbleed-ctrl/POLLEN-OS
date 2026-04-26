@@ -79,6 +79,22 @@ class MainViewModel @Inject constructor(
                     appendDebug("peer label updated: $label")
                     logEvent("Peer target identified: $label")
                 }
+            } else if (status.startsWith("POLLEN_COORDINATE_REQUEST|")) {
+                val parts = status.removePrefix("POLLEN_COORDINATE_REQUEST|").split("|")
+                val requester = parts.getOrNull(0).orEmpty().trim()
+                val requestTaskId = parts.getOrNull(1).orEmpty().trim()
+
+                if (requester.isNotBlank()) {
+                    state = state.copy(
+                        pendingCoordinateRequestLabel = requester,
+                        pendingCoordinateRequestTaskId = requestTaskId,
+                        pendingCoordinateRequestAt = System.currentTimeMillis(),
+                        missionSummary = "Coordinate request pending approval"
+                    )
+
+                    appendDebug("coordinate request pending from: $requester")
+                    logEvent("Coordinate request pending approval: $requester")
+                }
             } else {
                 state = state.copy(meshStatus = status)
             }

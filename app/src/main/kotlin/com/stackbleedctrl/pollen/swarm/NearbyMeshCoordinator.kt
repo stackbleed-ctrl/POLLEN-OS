@@ -412,6 +412,12 @@ class NearbyMeshCoordinator @Inject constructor(
                                 emitMeshStatus(
                                     "Sensitive task approved: ${decryptedPacket.taskType} · peer-key · trusted · fresh route"
                                 )
+
+                                if (decryptedPacket.taskType == AlphaTaskType.REQUEST_COORDINATES.name) {
+                                    val requester = decryptedPacket.senderLabel ?: decryptedPacket.fromNodeId
+                                    val requestTaskId = decryptedPacket.taskId ?: "unknown"
+                                    emitMeshStatus("POLLEN_COORDINATE_REQUEST|$requester|$requestTaskId")
+                                }
                             }
 
                             val responsePeerKeyMaterial = decryptedPacket.senderLabel?.let { senderLabel ->

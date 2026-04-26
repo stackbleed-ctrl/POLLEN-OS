@@ -55,6 +55,9 @@ fun PollenConsoleScreen(
     missionModeLabel: String = "OFFLINE_READY",
     infrastructureLabel: String = "Not required",
     missionSummary: String = "Ready for infrastructureless operation",
+    pendingCoordinateRequestLabel: String = "",
+    pendingCoordinateRequestTaskId: String = "",
+    pendingCoordinateRequestAt: Long? = null,
     lastIntent: String = "Mesh Health Check",
     lastDecision: String = "Waiting",
     meshStatus: String = "Idle",
@@ -160,6 +163,32 @@ fun PollenConsoleScreen(
                 InfoLine("Peer", selectedPeerLabel.ifBlank { "No selected peer" })
                 InfoLine("Freshness", peerFreshnessLabel)
                 InfoLine("Encryption", encryptionModeLabel)
+            }
+
+            PremiumPanel {
+                SectionTitle("COORDINATE CONSENT")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (pendingCoordinateRequestLabel.isBlank()) {
+                    InfoLine("Status", "No pending coordinate request")
+                    InfoLine("Policy", "Coordinates require explicit local share")
+                } else {
+                    InfoLine("Status", "Approval required")
+                    InfoLine("Requester", pendingCoordinateRequestLabel)
+                    InfoLine("Request task", pendingCoordinateRequestTaskId.ifBlank { "Unknown" })
+                    InfoLine("Received", displayTimestamp(pendingCoordinateRequestAt))
+                    InfoLine("Policy", "Use explicit share only if safe")
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    GoldButton(
+                        text = "Share My Coordinates · Explicit",
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        onAlphaTask(AlphaTaskType.SHARE_COORDINATES)
+                    }
+                }
             }
 
             PremiumPanel {

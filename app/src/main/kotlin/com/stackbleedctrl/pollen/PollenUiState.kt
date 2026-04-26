@@ -24,6 +24,10 @@ data class PollenUiState(
     val infrastructureLabel: String = "Not required",
     val missionSummary: String = "Ready for infrastructureless operation",
 
+    val pendingCoordinateRequestLabel: String = "",
+    val pendingCoordinateRequestTaskId: String = "",
+    val pendingCoordinateRequestAt: Long? = null,
+
     val aiSummary: String = "AI waiting for mesh events",
     val aiRecommendedAction: String = "OBSERVE",
     val aiConfidence: Float = 0f,
