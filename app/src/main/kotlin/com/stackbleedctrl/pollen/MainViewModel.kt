@@ -215,6 +215,7 @@ fun brainServiceStarted() {
             toNodeId = targetNodeId,
             taskId = taskId,
             taskType = taskType.name,
+            senderLabel = identity.displayName,
             payload = when (taskType) {
                 AlphaTaskType.MESH_ECHO -> "POLLEN mesh echo from ${identity.displayName}"
                 AlphaTaskType.PING -> "PING from ${identity.displayName}"
