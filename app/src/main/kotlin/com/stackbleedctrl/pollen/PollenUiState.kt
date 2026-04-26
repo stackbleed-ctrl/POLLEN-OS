@@ -20,6 +20,10 @@ data class PollenUiState(
     val keyModeLabel: String = "Unpaired",
     val encryptionModeLabel: String = "Alpha fallback",
 
+    val missionModeLabel: String = "OFFLINE_READY",
+    val infrastructureLabel: String = "Not required",
+    val missionSummary: String = "Ready for infrastructureless operation",
+
     val aiSummary: String = "AI waiting for mesh events",
     val aiRecommendedAction: String = "OBSERVE",
     val aiConfidence: Float = 0f,
@@ -52,7 +56,7 @@ data class PollenUiState(
     val lastReconnectedAt: Long? = null,
     val reconnectCount: Int = 0,
 
-    val buildLabel: String = "Alpha 0.8-dev",
+    val buildLabel: String = "Alpha 1.0-dev",
     val protocolLabel: String = "0.2",
 
     val identity: DeviceIdentity? = null,

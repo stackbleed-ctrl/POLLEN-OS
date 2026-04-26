@@ -52,6 +52,9 @@ fun PollenConsoleScreen(
     taskRouteReady: Boolean = false,
     keyModeLabel: String = "Unpaired",
     encryptionModeLabel: String = "Alpha fallback",
+    missionModeLabel: String = "OFFLINE_READY",
+    infrastructureLabel: String = "Not required",
+    missionSummary: String = "Ready for infrastructureless operation",
     lastIntent: String = "Mesh Health Check",
     lastDecision: String = "Waiting",
     meshStatus: String = "Idle",
@@ -143,6 +146,20 @@ fun PollenConsoleScreen(
                 InfoLine("Compatibility", compatibilityStatus)
                 InfoLine("Location policy", "Trusted peer only")
                 InfoLine("AI action", aiRecommendedAction)
+            }
+
+            PremiumPanel {
+                SectionTitle("MISSION LAYER")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                InfoLine("Mission mode", missionModeLabel)
+                InfoLine("Infrastructure", infrastructureLabel)
+                InfoLine("Mission summary", missionSummary)
+                InfoLine("Route", if (taskRouteReady) "Fresh route ready" else "Waiting for route")
+                InfoLine("Peer", selectedPeerLabel.ifBlank { "No selected peer" })
+                InfoLine("Freshness", peerFreshnessLabel)
+                InfoLine("Encryption", encryptionModeLabel)
             }
 
             PremiumPanel {

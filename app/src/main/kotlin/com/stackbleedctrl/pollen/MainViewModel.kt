@@ -111,6 +111,7 @@ class MainViewModel @Inject constructor(
             )
 
             refreshPeerCapabilityState()
+            refreshMissionState()
 
             if (lastAiPeerCount != effectiveCount) {
                 lastAiPeerCount = effectiveCount
@@ -144,6 +145,7 @@ class MainViewModel @Inject constructor(
         appendDebug("START BRAIN pressed")
         logEvent("Start brain pressed")
         state = state.copy(meshStatus = "Starting brain service...")
+        refreshMissionState()
         runAi(
             AiSignal(
                 type = AiSignalType.BRAIN_STARTED,
@@ -171,6 +173,7 @@ fun brainServiceStarted() {
         appendDebug("permissions ready")
         logEvent("Permissions ready")
         state = state.copy(meshStatus = "Permissions ready")
+        refreshMissionState()
         runAi(
             AiSignal(
                 type = AiSignalType.PERMISSIONS_READY,
@@ -216,6 +219,33 @@ fun brainServiceStarted() {
         state = state.copy(
             keyModeLabel = if (keyActive) "Key Active" else "Unpaired",
             encryptionModeLabel = if (keyActive) "Peer-to-peer" else "Alpha fallback"
+        )
+    }
+
+    private fun refreshMissionState() {
+        val missionMode = when {
+            state.trustedPeerLabel.isNotBlank() &&
+                state.taskRouteReady &&
+                state.peerFreshnessLabel == "Fresh" -> "MISSION_ACTIVE"
+
+            state.trustedPeerLabel.isNotBlank() -> "TRUSTED"
+            state.taskRouteReady && state.peerFreshnessLabel == "Fresh" -> "CONNECTED"
+            state.peerCount > 0 -> "SCANNING"
+            else -> "OFFLINE_READY"
+        }
+
+        val summary = when (missionMode) {
+            "MISSION_ACTIVE" -> "Trusted encrypted mesh active"
+            "TRUSTED" -> "Peer trusted, waiting for fresh route"
+            "CONNECTED" -> "Fresh peer route available"
+            "SCANNING" -> "Peer detected, establishing route"
+            else -> "Ready without tower/cloud infrastructure"
+        }
+
+        state = state.copy(
+            missionModeLabel = missionMode,
+            infrastructureLabel = "Not required",
+            missionSummary = summary
         )
     }
 
@@ -1102,6 +1132,7 @@ fun brainServiceStarted() {
         )
         sensitiveTaskPolicy.trustPeerLabel(label)
         refreshSecurityModeLabels()
+        refreshMissionState()
 
         appendDebug("trusted peer set: $label")
         logEvent("Trusted peer set: $label")
@@ -1125,6 +1156,7 @@ fun brainServiceStarted() {
         )
         sensitiveTaskPolicy.clearTrustedPeerLabel()
         refreshSecurityModeLabels()
+        refreshMissionState()
 
         appendDebug("trusted peer cleared: ${oldLabel.ifBlank { "none" }}")
         logEvent("Trusted peer cleared")
