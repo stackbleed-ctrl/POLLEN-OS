@@ -28,6 +28,10 @@ data class PollenUiState(
     val pendingCoordinateRequestTaskId: String = "",
     val pendingCoordinateRequestAt: Long? = null,
 
+    val lastPeerCoordinateLabel: String = "None",
+    val lastPeerCoordinateDistanceLabel: String = "Unknown",
+    val lastPeerCoordinateFreshnessLabel: String = "No coordinate fix",
+
     val aiSummary: String = "AI waiting for mesh events",
     val aiRecommendedAction: String = "OBSERVE",
     val aiConfidence: Float = 0f,

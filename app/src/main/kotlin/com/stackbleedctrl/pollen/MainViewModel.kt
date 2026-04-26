@@ -29,6 +29,12 @@ import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.sqrt
+import kotlin.math.sin
+import kotlin.math.roundToInt
+import kotlin.math.pow
+import kotlin.math.cos
+import kotlin.math.atan2
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -365,6 +371,81 @@ fun brainServiceStarted() {
         return packet.encryptPayload(outboundPeerKeyMaterial())
     }
 
+    private fun extractCoordinateValue(payload: String?, label: String): Double? {
+        if (payload.isNullOrBlank()) return null
+
+        val pattern = Regex("$label=([-0-9.]+)")
+        return pattern.find(payload)?.groupValues?.getOrNull(1)?.toDoubleOrNull()
+    }
+
+    private fun distanceMeters(
+        lat1: Double,
+        lon1: Double,
+        lat2: Double,
+        lon2: Double
+    ): Double {
+        val earthRadiusMeters = 6_371_000.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val rLat1 = Math.toRadians(lat1)
+        val rLat2 = Math.toRadians(lat2)
+
+        val a = sin(dLat / 2).pow(2.0) +
+            cos(rLat1) * cos(rLat2) * sin(dLon / 2).pow(2.0)
+
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return earthRadiusMeters * c
+    }
+
+    private fun formatDistance(meters: Double): String {
+        return if (meters >= 1000.0) {
+            "${"%.2f".format(meters / 1000.0)} km"
+        } else {
+            "${meters.roundToInt()} m"
+        }
+    }
+
+    private fun updatePeerCoordinateState(packet: MeshPacket) {
+        if (packet.taskType != AlphaTaskType.REQUEST_COORDINATES.name || packet.success != true) {
+            return
+        }
+
+        val peerLat = extractCoordinateValue(packet.payload, "Lat")
+        val peerLng = extractCoordinateValue(packet.payload, "Lng")
+
+        if (peerLat == null || peerLng == null) {
+            appendDebug("coordinate result parse skipped: missing lat/lng")
+            return
+        }
+
+        val localSnapshot = locationProvider.getLastKnownLocation()
+
+        val distanceLabel = if (localSnapshot != null) {
+            formatDistance(
+                distanceMeters(
+                    lat1 = localSnapshot.latitude,
+                    lon1 = localSnapshot.longitude,
+                    lat2 = peerLat,
+                    lon2 = peerLng
+                )
+            )
+        } else {
+            "Local location unavailable"
+        }
+
+        val sender = packet.senderLabel ?: packet.fromNodeId
+        val coordinateLabel = "Lat=$peerLat, Lng=$peerLng"
+
+        state = state.copy(
+            lastPeerCoordinateLabel = "$sender · $coordinateLabel",
+            lastPeerCoordinateDistanceLabel = distanceLabel,
+            lastPeerCoordinateFreshnessLabel = "Received ${System.currentTimeMillis()}"
+        )
+
+        appendDebug("peer coordinates received: $coordinateLabel distance=$distanceLabel")
+        logEvent("Peer coordinates received: $sender · distance=$distanceLabel")
+    }
+
     fun onTaskResult(packet: MeshPacket) {
         val taskId = packet.taskId ?: return
         val existingTask = state.tasks.firstOrNull { it.taskId == taskId }
@@ -474,6 +555,7 @@ fun brainServiceStarted() {
 
         state = state.copy(tasks = updatedTasks)
         updatePeerCompatibility(packet)
+        updatePeerCoordinateState(packet)
 
         val updatedTask = updatedTasks.firstOrNull { it.taskId == taskId }
 
