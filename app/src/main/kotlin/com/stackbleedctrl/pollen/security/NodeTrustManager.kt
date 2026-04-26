@@ -12,5 +12,5 @@ class NodeTrustManager @Inject constructor() {
         scores[peerId] = (scores[peerId] ?: 0) + delta
     }
 
-    fun trusted(peerId: String): Boolean = (scores[peerId] ?: 0) >= 0
+    fun trusted(peerId: String): Boolean = (scores[peerId] ?: 0) > 0
 }

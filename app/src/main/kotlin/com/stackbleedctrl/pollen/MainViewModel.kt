@@ -233,6 +233,17 @@ fun brainServiceStarted() {
         return MeshCrypto.peerKeyMaterial(localLabel, peerLabel)
     }
 
+    private fun requiresPeerKeyOnly(taskType: AlphaTaskType): Boolean {
+        return taskType == AlphaTaskType.LOCATION_SNAPSHOT
+    }
+
+    private fun hasPeerKeyReadyForSensitiveTask(): Boolean {
+        return state.trustedPeerLabel.isNotBlank() &&
+            state.taskRouteReady &&
+            state.peerFreshnessLabel == "Fresh" &&
+            outboundPeerKeyMaterial() != null
+    }
+
     fun createTaskPacket(taskType: AlphaTaskType, targetNodeId: String? = null): MeshPacket {
         val identity = state.identity ?: DeviceIdProvider.getIdentity(appContext)
         val taskId = UUID.randomUUID().toString().take(8)
@@ -603,13 +614,13 @@ fun brainServiceStarted() {
     }
 
     fun sendAlphaTask(taskType: AlphaTaskType) {
-        if (taskType == AlphaTaskType.LOCATION_SNAPSHOT && state.trustedPeerLabel.isBlank()) {
-            appendDebug("blocked sensitive task: LOCATION_SNAPSHOT requires trusted peer")
-            logEvent("Sensitive task blocked: LOCATION_SNAPSHOT · peer not trusted")
+        if (requiresPeerKeyOnly(taskType) && !hasPeerKeyReadyForSensitiveTask()) {
+            appendDebug("blocked sensitive task: ${taskType.name} requires trusted peer + fresh route + peer-key mode")
+            logEvent("Sensitive task blocked: ${taskType.name} · requires trusted peer + fresh route + peer-key encryption")
             runAi(
                 AiSignal(
                     type = AiSignalType.SENSITIVE_TASK_NOTICE,
-                    message = "Blocked LOCATION_SNAPSHOT without trusted peer",
+                    message = "Blocked ${taskType.name}: peer-key-only enforcement failed",
                     peerCount = state.peerCount,
                     meshStatus = state.meshStatus,
                     trustedPeerLabel = state.trustedPeerLabel,
@@ -641,6 +652,13 @@ fun brainServiceStarted() {
 
         val outboundTaskType = routeTaskTypeForSend(taskType)
         val packet = createTaskPacket(outboundTaskType)
+
+        if (requiresPeerKeyOnly(taskType) && !packet.usesPeerKey()) {
+            appendDebug("blocked sensitive task: ${taskType.name} packet was not peer-key encrypted")
+            logEvent("Sensitive task blocked: ${taskType.name} · packet encryption mode=${packet.encryptionMode}")
+            return
+        }
+
         val taskId = packet.taskId
 
         viewModelScope.launch {

@@ -21,6 +21,7 @@ import com.stackbleedctrl.pollen.mesh.MeshPacketType
 import com.stackbleedctrl.pollen.oslayer.BrainEvent
 import com.stackbleedctrl.pollen.oslayer.BrainEventBus
 import com.stackbleedctrl.pollen.security.NodeTrustManager
+import com.stackbleedctrl.pollen.tasks.AlphaTaskType
 import com.stackbleedctrl.pollen.tasks.AlphaTaskEngine
 import com.stackbleedctrl.pollen.tracing.PollenTracer
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -175,6 +176,36 @@ class NearbyMeshCoordinator @Inject constructor(
             ?.takeIf { it.isNotBlank() }
 
         return peerName ?: endpointId
+    }
+
+    private fun isSensitiveTask(packet: MeshPacket): Boolean {
+        return packet.taskType == AlphaTaskType.LOCATION_SNAPSHOT.name
+    }
+
+    private fun sensitiveTaskSecurityFailure(
+        packet: MeshPacket,
+        endpointId: String
+    ): String? {
+        val taskName = packet.taskType ?: packet.type.name
+        val peerName = peerLabel(endpointId)
+
+        if (!packet.usesPeerKey()) {
+            return "Sensitive task rejected: $taskName requires peer-key encryption · from=$peerName"
+        }
+
+        if (packet.senderLabel.isNullOrBlank()) {
+            return "Sensitive task rejected: $taskName missing sender label · from=$peerName"
+        }
+
+        if (peers[endpointId]?.connected != true) {
+            return "Sensitive task rejected: $taskName route not fresh/connected · from=$peerName"
+        }
+
+        if (!trustManager.trusted(endpointId)) {
+            return "Sensitive task rejected: $taskName peer not trusted · from=$peerName"
+        }
+
+        return null
     }
 
     private fun emitMeshStatus(text: String) {
@@ -357,6 +388,22 @@ class NearbyMeshCoordinator @Inject constructor(
                     when (decryptedPacket.type) {
                         MeshPacketType.TASK_REQUEST -> {
                             emitMeshStatus("TASK_REQUEST ${decryptedPacket.taskType} from ${decryptedPacket.fromNodeId}")
+
+                            if (isSensitiveTask(decryptedPacket)) {
+                                val failure = sensitiveTaskSecurityFailure(
+                                    packet = packet,
+                                    endpointId = endpointId
+                                )
+
+                                if (failure != null) {
+                                    emitMeshStatus(failure)
+                                    return
+                                }
+
+                                emitMeshStatus(
+                                    "Sensitive task approved: ${decryptedPacket.taskType} · peer-key · trusted · fresh route"
+                                )
+                            }
 
                             val responsePeerKeyMaterial = decryptedPacket.senderLabel?.let { senderLabel ->
                                 MeshCrypto.peerKeyMaterial(localName, senderLabel)
