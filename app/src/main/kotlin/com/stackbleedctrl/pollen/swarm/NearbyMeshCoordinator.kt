@@ -39,6 +39,7 @@ class NearbyMeshCoordinator @Inject constructor(
     private val localName: String = "${localIdentity.displayName} · ${localIdentity.nodeId.takeLast(4)}"
     private val alphaTaskEngine = AlphaTaskEngine(context)
     private val peers: LinkedHashMap<String, PeerNode> = linkedMapOf()
+    private val maxPacketAgeMs = 60_000L
 
     fun start() {
         tracer.trace("mesh", "start advertise + discover")
@@ -260,6 +261,20 @@ class NearbyMeshCoordinator @Inject constructor(
 
                     if (packet == null) {
                         emitMeshStatus("ROUTE from ${message.fromNodeId}: ${message.payload}")
+                        return
+                    }
+
+                    val packetAgeMs = packet.ageMs()
+                    val integrityState = if (packet.hasIntegrityTag()) "present" else "missing"
+
+                    emitMeshStatus(
+                        "Packet security: ${packet.taskType ?: packet.type.name} · age=${packetAgeMs}ms · integrity=$integrityState"
+                    )
+
+                    if (packet.isStale(maxPacketAgeMs)) {
+                        emitMeshStatus(
+                            "Packet rejected: stale ${packet.taskType ?: packet.type.name} · age=${packetAgeMs}ms"
+                        )
                         return
                     }
 
