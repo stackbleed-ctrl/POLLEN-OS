@@ -247,30 +247,55 @@ fun brainServiceStarted() {
         )
     }
 
-    private fun refreshMissionState() {
-        val missionMode = when {
-            state.trustedPeerLabel.isNotBlank() &&
-                state.taskRouteReady &&
-                state.peerFreshnessLabel == "Fresh" -> "MISSION_ACTIVE"
+    private fun missionReadinessLabel(score: Int): String {
+        return when {
+            score >= 90 -> "Field ready"
+            score >= 75 -> "Mission capable"
+            score >= 55 -> "Mesh forming"
+            score >= 35 -> "Limited"
+            else -> "Offline ready"
+        }
+    }
 
-            state.trustedPeerLabel.isNotBlank() -> "TRUSTED"
-            state.taskRouteReady && state.peerFreshnessLabel == "Fresh" -> "CONNECTED"
-            state.peerCount > 0 -> "SCANNING"
+    private fun refreshMissionState() {
+        val hasPeer = state.peerCount > 0
+        val hasFreshRoute = state.taskRouteReady && state.peerFreshnessLabel == "Fresh"
+        val hasTrust = state.trustedPeerLabel.isNotBlank()
+        val hasPeerKey = state.encryptionModeLabel == "Peer-to-peer"
+        val hasNavigationFix = state.lastPeerCoordinateLabel != "None"
+
+        val missionMode = when {
+            hasTrust && hasFreshRoute && hasPeerKey -> "MISSION_ACTIVE"
+            hasTrust -> "TRUSTED"
+            hasFreshRoute -> "CONNECTED"
+            hasPeer -> "SCANNING"
             else -> "OFFLINE_READY"
         }
 
-        val summary = when (missionMode) {
-            "MISSION_ACTIVE" -> "Trusted encrypted mesh active"
-            "TRUSTED" -> "Peer trusted, waiting for fresh route"
-            "CONNECTED" -> "Fresh peer route available"
-            "SCANNING" -> "Peer detected, establishing route"
+        val score = (
+            25 +
+                if (hasPeer) 15 else 0 +
+                if (hasFreshRoute) 15 else 0 +
+                if (hasTrust) 20 else 0 +
+                if (hasPeerKey) 15 else 0 +
+                if (hasNavigationFix) 10 else 0
+            ).coerceIn(0, 100)
+
+        val summary = when {
+            hasNavigationFix -> state.lastPeerCoordinateNavigationSummary
+            missionMode == "MISSION_ACTIVE" -> "Trusted encrypted mesh active"
+            missionMode == "TRUSTED" -> "Peer trusted, waiting for fresh route"
+            missionMode == "CONNECTED" -> "Fresh peer route available"
+            missionMode == "SCANNING" -> "Peer detected, establishing route"
             else -> "Ready without tower/cloud infrastructure"
         }
 
         state = state.copy(
             missionModeLabel = missionMode,
             infrastructureLabel = "Not required",
-            missionSummary = summary
+            missionSummary = summary,
+            missionReadinessScore = score,
+            missionReadinessLabel = missionReadinessLabel(score)
         )
     }
 
@@ -550,6 +575,7 @@ fun brainServiceStarted() {
             lastPeerCoordinateReceivedAt = receivedAt,
             missionSummary = navigationSummary
         )
+        refreshMissionState()
 
         appendDebug("peer coordinates received: $coordinateLabel distance=$distanceLabel bearing=$bearingLabel quality=$qualityLabel accuracy=$accuracyLabel confidence=$confidenceLabel")
         logEvent("Peer coordinates received: $sender · $navigationSummary · accuracy=$accuracyLabel")

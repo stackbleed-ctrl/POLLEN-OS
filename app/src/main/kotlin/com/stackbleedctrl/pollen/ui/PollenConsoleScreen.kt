@@ -55,6 +55,8 @@ fun PollenConsoleScreen(
     missionModeLabel: String = "OFFLINE_READY",
     infrastructureLabel: String = "Not required",
     missionSummary: String = "Ready for infrastructureless operation",
+    missionReadinessScore: Int = 25,
+    missionReadinessLabel: String = "Offline ready",
     pendingCoordinateRequestLabel: String = "",
     pendingCoordinateRequestTaskId: String = "",
     pendingCoordinateRequestAt: Long? = null,
@@ -173,6 +175,8 @@ fun PollenConsoleScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 InfoLine("Mission mode", missionModeLabel)
+                InfoLine("Mission readiness", "$missionReadinessScore/100")
+                InfoLine("Readiness", missionReadinessLabel)
                 InfoLine("Infrastructure", infrastructureLabel)
                 InfoLine("Mission summary", missionSummary)
                 InfoLine("Route", if (taskRouteReady) "Fresh route ready" else "Waiting for route")
