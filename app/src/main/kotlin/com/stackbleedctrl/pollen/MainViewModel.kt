@@ -14,6 +14,7 @@ import com.stackbleedctrl.pollen.mesh.MeshCrypto
 import com.stackbleedctrl.pollen.mesh.MeshPacket
 import com.stackbleedctrl.pollen.mesh.MeshPacketType
 import com.stackbleedctrl.pollen.sdk.PollenSdk
+import com.stackbleedctrl.pollen.security.SensitiveTaskPolicy
 import com.stackbleedctrl.pollen.tasks.AlphaTaskState
 import com.stackbleedctrl.pollen.tasks.AlphaTaskType
 import com.stackbleedctrl.pollen.tasks.TaskStatus
@@ -31,6 +32,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val sdk: PollenSdk,
+    private val sensitiveTaskPolicy: SensitiveTaskPolicy,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -1082,6 +1084,7 @@ fun brainServiceStarted() {
         state = state.copy(
             trustedPeerLabel = label
         )
+        sensitiveTaskPolicy.trustPeerLabel(label)
         refreshSecurityModeLabels()
 
         appendDebug("trusted peer set: $label")
@@ -1104,6 +1107,7 @@ fun brainServiceStarted() {
         state = state.copy(
             trustedPeerLabel = ""
         )
+        sensitiveTaskPolicy.clearTrustedPeerLabel()
         refreshSecurityModeLabels()
 
         appendDebug("trusted peer cleared: ${oldLabel.ifBlank { "none" }}")

@@ -21,6 +21,7 @@ import com.stackbleedctrl.pollen.mesh.MeshPacketType
 import com.stackbleedctrl.pollen.oslayer.BrainEvent
 import com.stackbleedctrl.pollen.oslayer.BrainEventBus
 import com.stackbleedctrl.pollen.security.NodeTrustManager
+import com.stackbleedctrl.pollen.security.SensitiveTaskPolicy
 import com.stackbleedctrl.pollen.tasks.AlphaTaskType
 import com.stackbleedctrl.pollen.tasks.AlphaTaskEngine
 import com.stackbleedctrl.pollen.tracing.PollenTracer
@@ -32,6 +33,7 @@ import javax.inject.Singleton
 class NearbyMeshCoordinator @Inject constructor(
     @ApplicationContext context: Context,
     private val trustManager: NodeTrustManager,
+    private val sensitiveTaskPolicy: SensitiveTaskPolicy,
     private val tracer: PollenTracer,
     private val bus: BrainEventBus
 ) {
@@ -203,6 +205,11 @@ class NearbyMeshCoordinator @Inject constructor(
 
         if (!trustManager.trusted(endpointId)) {
             return "Sensitive task rejected: $taskName peer not trusted · from=$peerName"
+        }
+
+        if (!sensitiveTaskPolicy.isTrustedPeerLabel(packet.senderLabel)) {
+            val expected = sensitiveTaskPolicy.currentTrustedPeerLabel().ifBlank { "none" }
+            return "Sensitive task rejected: $taskName sender not locally trusted · expected=$expected · got=${packet.senderLabel ?: "none"}"
         }
 
         return null
