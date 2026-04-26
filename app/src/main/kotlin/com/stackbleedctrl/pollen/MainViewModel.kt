@@ -244,6 +244,14 @@ fun brainServiceStarted() {
             outboundPeerKeyMaterial() != null
     }
 
+    private fun peerSupportsSensitiveTask(taskType: AlphaTaskType): Boolean {
+        if (!requiresPeerKeyOnly(taskType)) {
+            return true
+        }
+
+        return peerSupportsTask(taskType)
+    }
+
     fun createTaskPacket(taskType: AlphaTaskType, targetNodeId: String? = null): MeshPacket {
         val identity = state.identity ?: DeviceIdProvider.getIdentity(appContext)
         val taskId = UUID.randomUUID().toString().take(8)
@@ -705,6 +713,22 @@ fun brainServiceStarted() {
             return
         }
 
+        if (requiresPeerKeyOnly(taskType) && !peerSupportsSensitiveTask(taskType)) {
+            appendDebug("blocked sensitive task: ${taskType.name} not advertised by peer")
+            logEvent("Sensitive task blocked: ${taskType.name} · peer does not advertise support")
+            runAi(
+                AiSignal(
+                    type = AiSignalType.SENSITIVE_TASK_NOTICE,
+                    message = "Blocked ${taskType.name}: peer does not advertise support",
+                    peerCount = state.peerCount,
+                    meshStatus = state.meshStatus,
+                    trustedPeerLabel = state.trustedPeerLabel,
+                    taskType = taskType.name
+                )
+            )
+            return
+        }
+
         logSensitiveTaskNotice(taskType)
 
         if (!hasUsablePeerForTask(taskType)) {
@@ -726,6 +750,23 @@ fun brainServiceStarted() {
         }
 
         val outboundTaskType = routeTaskTypeForSend(taskType)
+
+        if (requiresPeerKeyOnly(taskType) && outboundTaskType != taskType) {
+            appendDebug("blocked sensitive task downgrade: requested=${taskType.name} routed=${outboundTaskType.name}")
+            logEvent("Sensitive task blocked: ${taskType.name} · no fallback/downgrade allowed")
+            runAi(
+                AiSignal(
+                    type = AiSignalType.SENSITIVE_TASK_NOTICE,
+                    message = "Blocked ${taskType.name}: sensitive task downgrade rejected",
+                    peerCount = state.peerCount,
+                    meshStatus = state.meshStatus,
+                    trustedPeerLabel = state.trustedPeerLabel,
+                    taskType = taskType.name
+                )
+            )
+            return
+        }
+
         val packet = createTaskPacket(outboundTaskType)
 
         if (requiresPeerKeyOnly(taskType) && !packet.usesPeerKey()) {
