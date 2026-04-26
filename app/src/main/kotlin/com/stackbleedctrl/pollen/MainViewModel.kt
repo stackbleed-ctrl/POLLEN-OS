@@ -535,6 +535,8 @@ fun brainServiceStarted() {
         val confidenceLabel = coordinateConfidenceLabel(accuracyMeters)
         val receivedAt = System.currentTimeMillis()
 
+        val navigationSummary = "NAV: $distanceLabel · $bearingLabel · $confidenceLabel confidence · $qualityLabel"
+
         state = state.copy(
             lastPeerCoordinateLabel = "$sender · $coordinateLabel",
             lastPeerCoordinateDistanceLabel = distanceLabel,
@@ -544,11 +546,13 @@ fun brainServiceStarted() {
             lastPeerCoordinateQualityLabel = qualityLabel,
             lastPeerCoordinateAccuracyLabel = accuracyLabel,
             lastPeerCoordinateConfidenceLabel = confidenceLabel,
-            lastPeerCoordinateReceivedAt = receivedAt
+            lastPeerCoordinateNavigationSummary = navigationSummary,
+            lastPeerCoordinateReceivedAt = receivedAt,
+            missionSummary = navigationSummary
         )
 
         appendDebug("peer coordinates received: $coordinateLabel distance=$distanceLabel bearing=$bearingLabel quality=$qualityLabel accuracy=$accuracyLabel confidence=$confidenceLabel")
-        logEvent("Peer coordinates received: $sender · distance=$distanceLabel · bearing=$bearingLabel · quality=$qualityLabel · accuracy=$accuracyLabel")
+        logEvent("Peer coordinates received: $sender · $navigationSummary · accuracy=$accuracyLabel")
     }
 
     fun onTaskResult(packet: MeshPacket) {

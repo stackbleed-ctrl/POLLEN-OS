@@ -66,6 +66,7 @@ fun PollenConsoleScreen(
     lastPeerCoordinateQualityLabel: String = "No fix",
     lastPeerCoordinateAccuracyLabel: String = "Unknown",
     lastPeerCoordinateConfidenceLabel: String = "Unknown",
+    lastPeerCoordinateNavigationSummary: String = "No peer navigation fix",
     lastPeerCoordinateReceivedAt: Long? = null,
     lastIntent: String = "Mesh Health Check",
     lastDecision: String = "Waiting",
@@ -174,6 +175,7 @@ fun PollenConsoleScreen(
                 InfoLine("Peer", selectedPeerLabel.ifBlank { "No selected peer" })
                 InfoLine("Freshness", peerFreshnessLabel)
                 InfoLine("Encryption", encryptionModeLabel)
+                InfoLine("Navigation", lastPeerCoordinateNavigationSummary)
                 InfoLine("Peer coordinates", lastPeerCoordinateLabel)
                 InfoLine("Distance estimate", lastPeerCoordinateDistanceLabel)
                 InfoLine("Bearing", lastPeerCoordinateBearingLabel)
