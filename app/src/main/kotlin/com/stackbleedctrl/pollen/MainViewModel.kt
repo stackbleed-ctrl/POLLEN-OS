@@ -46,6 +46,7 @@ class MainViewModel @Inject constructor(
 
     private val taskTimeoutMs = 8_000L
     private val peerFreshMs = 10_000L
+    private val missionCoordinateFreshMs = 10 * 60 * 1000L
     private val aiEngine = PollenAiEngine()
     private val locationProvider = LocationSnapshotProvider(appContext)
     private var lastAiPeerCount: Int? = null
@@ -257,12 +258,21 @@ fun brainServiceStarted() {
         }
     }
 
+    private fun hasFreshNavigationFix(): Boolean {
+        val receivedAt = state.lastPeerCoordinateReceivedAt ?: return false
+        val hasFix = state.lastPeerCoordinateLabel != "None"
+        val notExpired = System.currentTimeMillis() - receivedAt <= missionCoordinateFreshMs
+        val notStale = !state.lastPeerCoordinateQualityLabel.equals("Stale", ignoreCase = true)
+
+        return hasFix && notExpired && notStale
+    }
+
     private fun refreshMissionState() {
         val hasPeer = state.peerCount > 0
         val hasFreshRoute = state.taskRouteReady && state.peerFreshnessLabel == "Fresh"
         val hasTrust = state.trustedPeerLabel.isNotBlank()
         val hasPeerKey = state.encryptionModeLabel == "Peer-to-peer"
-        val hasNavigationFix = state.lastPeerCoordinateLabel != "None"
+        val hasNavigationFix = hasFreshNavigationFix()
 
         val missionMode = when {
             hasTrust && hasFreshRoute && hasPeerKey -> "MISSION_ACTIVE"
@@ -296,11 +306,14 @@ fun brainServiceStarted() {
             "Key=${if (hasPeerKey) "yes" else "no"} · " +
             "Nav=${if (hasNavigationFix) "yes" else "no"}"
 
+        val hasAnyNavigationFix = state.lastPeerCoordinateLabel != "None"
+
         val recommendedAction = when {
             !hasPeer -> "Start brain and scan for peers"
             !hasFreshRoute -> "Move closer or wait for fresh route"
             !hasTrust -> "Trust selected peer"
             !hasPeerKey -> "Re-trust peer to activate peer-key mode"
+            hasAnyNavigationFix && !hasNavigationFix -> "Refresh peer coordinates"
             !hasNavigationFix -> "Request peer coordinates"
             else -> "Mission ready"
         }

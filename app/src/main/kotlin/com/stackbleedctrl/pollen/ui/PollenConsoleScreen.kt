@@ -200,7 +200,8 @@ fun PollenConsoleScreen(
                             onTrustSelectedPeer()
                         }
 
-                        missionRecommendedAction.contains("Request peer coordinates", ignoreCase = true) -> {
+                        missionRecommendedAction.contains("Request peer coordinates", ignoreCase = true) ||
+                            missionRecommendedAction.contains("Refresh peer coordinates", ignoreCase = true) -> {
                             onAlphaTask(AlphaTaskType.REQUEST_COORDINATES)
                         }
 
