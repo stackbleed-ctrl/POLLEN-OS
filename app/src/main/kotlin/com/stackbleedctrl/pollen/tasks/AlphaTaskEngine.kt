@@ -30,6 +30,7 @@ enum class AlphaTaskType {
     NODE_CHECKIN,
     REQUEST_COORDINATES,
     SHARE_COORDINATES,
+    COORDINATE_REQUEST_DENIED,
     FIELD_REPORT,
     RESOURCE_STATUS,
     EVAC_MARKER
@@ -236,6 +237,18 @@ class AlphaTaskEngine(
                     success = snapshot != null,
                     payload = snapshot?.toDisplayString()
                         ?: "Coordinates unavailable: permission missing or no last known fix"
+                )
+            }
+
+            AlphaTaskType.COORDINATE_REQUEST_DENIED.name -> {
+                val identity = DeviceIdProvider.getIdentity(context)
+
+                result(
+                    nodeId = nodeId,
+                    taskId = taskId,
+                    taskType = taskType,
+                    success = true,
+                    payload = "COORDINATE_REQUEST_DENIED · Node=${identity.displayName} declined to share coordinates"
                 )
             }
 

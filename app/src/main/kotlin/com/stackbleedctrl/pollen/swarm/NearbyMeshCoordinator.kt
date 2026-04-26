@@ -183,7 +183,8 @@ class NearbyMeshCoordinator @Inject constructor(
     private fun isSensitiveTask(packet: MeshPacket): Boolean {
         return packet.taskType == AlphaTaskType.LOCATION_SNAPSHOT.name ||
             packet.taskType == AlphaTaskType.REQUEST_COORDINATES.name ||
-            packet.taskType == AlphaTaskType.SHARE_COORDINATES.name
+            packet.taskType == AlphaTaskType.SHARE_COORDINATES.name ||
+            packet.taskType == AlphaTaskType.COORDINATE_REQUEST_DENIED.name
     }
 
     private fun sensitiveTaskSecurityFailure(

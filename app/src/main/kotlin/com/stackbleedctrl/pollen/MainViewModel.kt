@@ -284,7 +284,8 @@ fun brainServiceStarted() {
     private fun requiresPeerKeyOnly(taskType: AlphaTaskType): Boolean {
         return taskType == AlphaTaskType.LOCATION_SNAPSHOT ||
             taskType == AlphaTaskType.REQUEST_COORDINATES ||
-            taskType == AlphaTaskType.SHARE_COORDINATES
+            taskType == AlphaTaskType.SHARE_COORDINATES ||
+            taskType == AlphaTaskType.COORDINATE_REQUEST_DENIED
     }
 
     private fun hasPeerKeyReadyForSensitiveTask(): Boolean {
@@ -324,6 +325,7 @@ fun brainServiceStarted() {
                 AlphaTaskType.NODE_CHECKIN -> "Node check-in request from ${identity.displayName}"
                 AlphaTaskType.REQUEST_COORDINATES -> "Coordinate request from trusted peer ${identity.displayName}. Approval required on receiving node."
                 AlphaTaskType.SHARE_COORDINATES -> "Explicit coordinate share from ${identity.displayName}"
+                AlphaTaskType.COORDINATE_REQUEST_DENIED -> "Coordinate request denied by ${identity.displayName}"
                 AlphaTaskType.FIELD_REPORT -> "Field report from ${identity.displayName}: Alpha 1.0 mission packet."
                 AlphaTaskType.RESOURCE_STATUS -> "Resource status request from ${identity.displayName}"
                 AlphaTaskType.EVAC_MARKER -> "Evac marker test from ${identity.displayName}"
@@ -395,7 +397,8 @@ fun brainServiceStarted() {
 
         if (existingTask.taskType == AlphaTaskType.LOCATION_SNAPSHOT.name ||
             existingTask.taskType == AlphaTaskType.REQUEST_COORDINATES.name ||
-            existingTask.taskType == AlphaTaskType.SHARE_COORDINATES.name
+            existingTask.taskType == AlphaTaskType.SHARE_COORDINATES.name ||
+            existingTask.taskType == AlphaTaskType.COORDINATE_REQUEST_DENIED.name
         ) {
             val expectedPeerLabel = existingTask.targetPeerLabel
             val resultSenderLabel = packet.senderLabel
@@ -784,11 +787,13 @@ fun brainServiceStarted() {
         appendDebug("coordinate request denied: $requester")
         logEvent("Coordinate request denied: $requester")
 
+        sendAlphaTask(AlphaTaskType.COORDINATE_REQUEST_DENIED)
+
         state = state.copy(
             pendingCoordinateRequestLabel = "",
             pendingCoordinateRequestTaskId = "",
             pendingCoordinateRequestAt = null,
-            missionSummary = "Coordinate request denied"
+            missionSummary = "Coordinate request denied and response attempted"
         )
 
         runAi(
@@ -1075,6 +1080,7 @@ fun brainServiceStarted() {
                 AlphaTaskType.NODE_CHECKIN -> "CHECKIN_OK · local simulation · peers=${state.peerCount}"
                 AlphaTaskType.REQUEST_COORDINATES -> "Coordinate request simulation complete"
                 AlphaTaskType.SHARE_COORDINATES -> "Coordinate share simulation complete"
+                AlphaTaskType.COORDINATE_REQUEST_DENIED -> "COORDINATE_REQUEST_DENIED · local simulation"
                 AlphaTaskType.FIELD_REPORT -> "FIELD_REPORT_ACK · local simulation"
                 AlphaTaskType.RESOURCE_STATUS -> "RESOURCE_STATUS · local simulation · battery/status ready"
                 AlphaTaskType.EVAC_MARKER -> "EVAC_MARKER_ACK · local simulation"
