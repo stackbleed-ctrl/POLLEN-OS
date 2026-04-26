@@ -309,6 +309,22 @@ fun brainServiceStarted() {
             return
         }
 
+        if (existingTask.taskType != packet.taskType) {
+            appendDebug("task result rejected: task type mismatch expected=${existingTask.taskType} got=${packet.taskType}")
+            logEvent("Task result rejected: type mismatch · expected=${existingTask.taskType} got=${packet.taskType}")
+            runAi(
+                AiSignal(
+                    type = AiSignalType.ERROR,
+                    message = "Rejected task result type mismatch",
+                    peerCount = state.peerCount,
+                    meshStatus = state.meshStatus,
+                    trustedPeerLabel = state.trustedPeerLabel,
+                    taskType = packet.taskType
+                )
+            )
+            return
+        }
+
         val completedAt = System.currentTimeMillis()
 
         val updatedTasks = state.tasks.map { task ->

@@ -439,9 +439,11 @@ class NearbyMeshCoordinator @Inject constructor(
                                 return
                             }
 
-                            emitMeshStatus(
-                                "Sensitive result accepted: ${decryptedPacket.taskType ?: decryptedPacket.type.name} · encryption=$encryptionState · integrity=$integrityState"
-                            )
+                            if (isSensitiveTask(decryptedPacket)) {
+                                emitMeshStatus(
+                                    "Sensitive result accepted: ${decryptedPacket.taskType ?: decryptedPacket.type.name} · encryption=$encryptionState · integrity=$integrityState"
+                                )
+                            }
 
                             bus.tryEmit(BrainEvent.MeshStatus("POLLEN_TASK_RESULT|${decryptedPacket.toJson()}"))
                             emitMeshStatus("TASK_RESULT from ${decryptedPacket.fromNodeId}: ${decryptedPacket.payload}")
