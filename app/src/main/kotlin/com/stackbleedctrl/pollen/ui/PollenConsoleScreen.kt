@@ -50,6 +50,8 @@ fun PollenConsoleScreen(
     selectedPeerLabel: String = "",
     peerFreshnessLabel: String = "No peer",
     taskRouteReady: Boolean = false,
+    keyModeLabel: String = "Unpaired",
+    encryptionModeLabel: String = "Alpha fallback",
     lastIntent: String = "Mesh Health Check",
     lastDecision: String = "Waiting",
     meshStatus: String = "Idle",
@@ -136,6 +138,8 @@ fun PollenConsoleScreen(
                 InfoLine("Build", buildLabel)
                 InfoLine("Protocol", protocolLabel)
                 InfoLine("Trust", trustedPeerLabel.ifBlank { "Untrusted" })
+                InfoLine("Pairing", keyModeLabel)
+                InfoLine("Encryption", encryptionModeLabel)
                 InfoLine("Compatibility", compatibilityStatus)
                 InfoLine("Location policy", "Trusted peer only")
                 InfoLine("AI action", aiRecommendedAction)

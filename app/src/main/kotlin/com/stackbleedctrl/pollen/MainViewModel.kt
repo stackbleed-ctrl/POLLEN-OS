@@ -206,6 +206,17 @@ fun brainServiceStarted() {
         }
     }
 
+    private fun refreshSecurityModeLabels() {
+        val keyActive = state.trustedPeerLabel.isNotBlank() &&
+            state.taskRouteReady &&
+            state.peerFreshnessLabel == "Fresh"
+
+        state = state.copy(
+            keyModeLabel = if (keyActive) "Key Active" else "Unpaired",
+            encryptionModeLabel = if (keyActive) "Peer-to-peer" else "Alpha fallback"
+        )
+    }
+
     private fun outboundPeerKeyMaterial(): String? {
         val identity = state.identity ?: DeviceIdProvider.getIdentity(appContext)
         val localLabel = "${identity.displayName} · ${identity.nodeId.takeLast(4)}"
@@ -937,6 +948,7 @@ fun brainServiceStarted() {
         state = state.copy(
             trustedPeerLabel = label
         )
+        refreshSecurityModeLabels()
 
         appendDebug("trusted peer set: $label")
         logEvent("Trusted peer set: $label")
@@ -958,6 +970,7 @@ fun brainServiceStarted() {
         state = state.copy(
             trustedPeerLabel = ""
         )
+        refreshSecurityModeLabels()
 
         appendDebug("trusted peer cleared: ${oldLabel.ifBlank { "none" }}")
         logEvent("Trusted peer cleared")

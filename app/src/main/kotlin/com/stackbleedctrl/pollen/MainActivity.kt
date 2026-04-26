@@ -57,6 +57,8 @@ class MainActivity : ComponentActivity() {
                 selectedPeerLabel = uiState.selectedPeerLabel,
                 peerFreshnessLabel = uiState.peerFreshnessLabel,
                 taskRouteReady = uiState.taskRouteReady,
+                keyModeLabel = uiState.keyModeLabel,
+                encryptionModeLabel = uiState.encryptionModeLabel,
                 lastIntent = uiState.lastIntent.ifBlank { "Mesh Health Check" },
                 lastDecision = uiState.lastDecision,
                 meshStatus = uiState.meshStatus,

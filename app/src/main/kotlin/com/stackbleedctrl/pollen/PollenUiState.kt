@@ -17,6 +17,8 @@ data class PollenUiState(
     val selectedPeerLastSeenMs: Long? = null,
     val peerFreshnessLabel: String = "No peer",
     val taskRouteReady: Boolean = false,
+    val keyModeLabel: String = "Unpaired",
+    val encryptionModeLabel: String = "Alpha fallback",
 
     val aiSummary: String = "AI waiting for mesh events",
     val aiRecommendedAction: String = "OBSERVE",
