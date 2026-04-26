@@ -86,6 +86,9 @@ fun PollenConsoleScreen(
     demoSequenceRunning: Boolean = false,
     demoSequenceStep: Int = 0,
     demoSequenceTotal: Int = 5,
+    missionDemoRunning: Boolean = false,
+    missionDemoStep: Int = 0,
+    missionDemoTotal: Int = 5,
     peerCapabilitySummary: String = "Peer capability not checked",
     recommendedSafeTask: String = "WAIT_FOR_PEER",
     alphaVerifyRunning: Boolean = false,
@@ -120,6 +123,7 @@ fun PollenConsoleScreen(
     onRunRangeProbe: () -> Unit = {},
     onRunCompatibilityCheck: () -> Unit = {},
     onRunDemoSequence: () -> Unit = {},
+    onRunMissionDemoSequence: () -> Unit = {},
     onRunAlphaVerification: () -> Unit = {},
     onSharePendingCoordinates: () -> Unit = {},
     onDenyCoordinateRequest: () -> Unit = {},
@@ -235,6 +239,7 @@ fun PollenConsoleScreen(
                 InfoLine("Average latency", averageLatencyMs?.let { "${it}ms" } ?: "No latency yet")
                 InfoLine("Full test", if (fullTestRunning) "Running" else "Ready")
                 InfoLine("Demo sequence", if (demoSequenceRunning) "$demoSequenceStep/$demoSequenceTotal running" else "Ready")
+                InfoLine("Mission demo", if (missionDemoRunning) "$missionDemoStep/$missionDemoTotal running" else "Ready")
                 InfoLine("Alpha verify", if (alphaVerifyRunning) "$alphaVerifyStep/$alphaVerifyTotal running" else "Ready")
                 InfoLine("Field test", if (fieldTestRunning) "Running · $fieldTestDistanceLabel" else "Ready")
                 InfoLine("Range probe", if (rangeProbeRunning) "$rangeProbeSent/$rangeProbeTotal running" else "Ready")
@@ -408,6 +413,12 @@ fun PollenConsoleScreen(
                 text = if (demoSequenceRunning) "Demo Sequence $demoSequenceStep/$demoSequenceTotal" else "Run Demo Sequence",
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onRunDemoSequence
+            )
+
+            GoldButton(
+                text = if (missionDemoRunning) "Mission Demo $missionDemoStep/$missionDemoTotal" else "Run Mission Demo",
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onRunMissionDemoSequence
             )
 
             GoldButton(

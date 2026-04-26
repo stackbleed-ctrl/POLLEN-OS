@@ -52,6 +52,10 @@ data class PollenUiState(
     val demoSequenceStep: Int = 0,
     val demoSequenceTotal: Int = 5,
 
+    val missionDemoRunning: Boolean = false,
+    val missionDemoStep: Int = 0,
+    val missionDemoTotal: Int = 5,
+
     val peerCapabilitySummary: String = "Peer capability not checked",
     val recommendedSafeTask: String = "WAIT_FOR_PEER",
 

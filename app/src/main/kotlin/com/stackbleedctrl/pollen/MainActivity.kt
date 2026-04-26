@@ -87,6 +87,9 @@ class MainActivity : ComponentActivity() {
                 aiConfidence = uiState.aiConfidence,
                 aiHealthScore = uiState.aiHealthScore,
                 fullTestRunning = uiState.fullTestRunning,
+                missionDemoRunning = uiState.missionDemoRunning,
+                missionDemoStep = uiState.missionDemoStep,
+                missionDemoTotal = uiState.missionDemoTotal,
                 rangeProbeRunning = uiState.rangeProbeRunning,
                 rangeProbeSent = uiState.rangeProbeSent,
                 rangeProbeTotal = uiState.rangeProbeTotal,
@@ -111,6 +114,7 @@ class MainActivity : ComponentActivity() {
                 onClearTrustedPeer = vm::clearTrustedPeer,
                 onExportLogs = ::shareTesterLog,
                 onRunFullMeshTest = vm::runFullMeshTest,
+                onRunMissionDemoSequence = vm::runMissionDemoSequence,
                 onRunRangeProbe = vm::runRangeProbe,
                 onSharePendingCoordinates = vm::shareCoordinatesForPendingRequest,
                 onDenyCoordinateRequest = vm::denyPendingCoordinateRequest

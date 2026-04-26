@@ -904,6 +904,59 @@ fun brainServiceStarted() {
         }
     }
 
+    fun runMissionDemoSequence() {
+        if (state.missionDemoRunning) {
+            appendDebug("mission demo already running")
+            logEvent("Mission demo already running")
+            return
+        }
+
+        val sequence = listOf(
+            AlphaTaskType.MISSION_STATUS,
+            AlphaTaskType.NODE_CHECKIN,
+            AlphaTaskType.RESOURCE_STATUS,
+            AlphaTaskType.FIELD_REPORT,
+            AlphaTaskType.REQUEST_COORDINATES
+        )
+
+        state = state.copy(
+            missionDemoRunning = true,
+            missionDemoStep = 0,
+            missionDemoTotal = sequence.size,
+            lastIntent = "Mission Demo",
+            missionSummary = "Mission demo running"
+        )
+
+        appendDebug("mission demo started")
+        logEvent("Mission demo started: ${sequence.size} mission packets")
+
+        viewModelScope.launch {
+            sequence.forEachIndexed { index, taskType ->
+                state = state.copy(
+                    missionDemoStep = index + 1,
+                    lastDecision = "Mission demo ${index + 1}/${sequence.size}: ${taskType.name}",
+                    missionSummary = "Mission demo ${index + 1}/${sequence.size}: ${taskType.name}"
+                )
+
+                logEvent("Mission demo ${index + 1}/${sequence.size}: ${taskType.name}")
+                sendAlphaTask(taskType)
+
+                delay(1_000L)
+            }
+
+            delay(taskTimeoutMs + 1_000L)
+
+            state = state.copy(
+                missionDemoRunning = false,
+                lastDecision = "Mission demo completed",
+                missionSummary = "Mission demo completed"
+            )
+
+            appendDebug("mission demo completed")
+            logEvent("Mission demo completed")
+        }
+    }
+
     fun runFullMeshTest() {
         if (state.fullTestRunning) {
             appendDebug("full mesh test already running")
